@@ -131,17 +131,71 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
 
 ---
 
+## Respaldo y restauración de la base de datos
+
+Los datos reales (clientes, evaluaciones, usuarios) viven en SQL Server, **no** en el
+repositorio. Para respaldarlos se usan dos scripts en `backend/scripts/`.
+
+> Los respaldos (`.bak`) contienen datos personales, por eso la carpeta `backups/`
+> está en `.gitignore` y **nunca se sube a GitHub**.
+
+### Crear un respaldo
+
+```powershell
+cd "C:\Users\RYZEN\Documents\TESIS 2026\SISTEMA\V.0.1"
+powershell -ExecutionPolicy Bypass -File ".\backend\scripts\backup_db.ps1"
+```
+
+- Genera un archivo `inmobiliaria_db_AAAAMMDD_HHMMSS.bak` dentro de `backups/`.
+- Puede aparecer un aviso de Windows (UAC): acéptalo (la copia necesita permisos).
+- En otra PC/instancia:
+  `... backup_db.ps1 -Server "MI-PC\SQLEXPRESS" -Database "inmobiliaria_db"`
+
+> **Importante:** copia el `.bak` a un disco externo o nube privada. Un respaldo
+> en el mismo disco no protege ante una falla del disco.
+
+### Restaurar un respaldo
+
+```powershell
+# Restaura el .bak más reciente de la carpeta backups/
+powershell -ExecutionPolicy Bypass -File ".\backend\scripts\restore_db.ps1"
+
+# O un archivo específico
+powershell -ExecutionPolicy Bypass -File ".\backend\scripts\restore_db.ps1" -BakFile "C:\ruta\al\archivo.bak"
+```
+
+- Pide confirmación escribiendo `SI` porque **reemplaza** la base existente.
+- Reubica automáticamente los archivos de datos/log según la instancia destino,
+  por lo que sirve también para restaurar en otra PC.
+
+### Recrear la base desde cero (sin respaldo, solo estructura + datos iniciales)
+
+Si no tienes un `.bak` (por ejemplo en una PC nueva tras clonar el repo):
+
+```powershell
+# 1) Ejecutar los scripts SQL de estructura en orden (con SSMS o sqlcmd)
+#    backend/migrations/01_create_tables.sql ... 07_fk_faltantes.sql
+# 2) Cargar los datos iniciales
+cd backend
+.\venv\Scripts\python.exe seed.py
+```
+
+---
+
 ## Estructura del proyecto
 
 ```
 V.0.1/
 ├── backend/
 │   ├── app/               ← Código Flask
-│   ├── migrations/        ← Scripts SQL
+│   ├── migrations/        ← Scripts SQL (estructura de la BD)
+│   ├── scripts/           ← backup_db.ps1 / restore_db.ps1
 │   ├── venv/              ← Entorno virtual Python (NO subir a Git)
-│   ├── .env               ← Configuración BD y JWT
+│   ├── .env               ← Configuración BD y JWT (NO subir a Git)
 │   ├── run.py             ← Punto de entrada
 │   └── seed.py            ← Datos iniciales (ejecutar solo una vez)
+│
+├── backups/               ← Respaldos .bak (NO subir a Git)
 │
 └── frontend/
     ├── src/               ← Código React
