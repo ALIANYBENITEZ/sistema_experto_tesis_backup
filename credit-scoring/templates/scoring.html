@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScoreHouse – Nueva Solicitud</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="app-page">
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-icon sm"><i class="fas fa-house-chimney"></i></div>
+      <span class="logo-text">Score<span class="logo-accent">House</span></span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+      <a href="/dashboard" class="nav-item"><i class="fas fa-gauge-high"></i><span>Dashboard</span></a>
+      <a href="/scoring" class="nav-item active"><i class="fas fa-file-invoice-dollar"></i><span>Nueva Solicitud</span></a>
+      <a href="/report" class="nav-item"><i class="fas fa-chart-bar"></i><span>Reportes</span></a>
+      <div class="nav-section-label">Gestión</div>
+      <a href="#" class="nav-item"><i class="fas fa-users"></i><span>Clientes</span></a>
+      <a href="#" class="nav-item"><i class="fas fa-building"></i><span>Inmuebles</span></a>
+      <a href="#" class="nav-item"><i class="fas fa-sliders"></i><span>Configuración</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-mini">
+        <div class="user-avatar"><i class="fas fa-user"></i></div>
+        <div class="user-info">
+          <span class="user-name">Admin</span>
+          <span class="user-role">Analista Senior</span>
+        </div>
+      </div>
+      <a href="/" class="logout-btn" title="Cerrar sesión"><i class="fas fa-right-from-bracket"></i></a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <header class="top-header">
+      <div class="header-left">
+        <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-title">
+          <h1>Nueva Solicitud</h1>
+          <span class="breadcrumb">Inicio / Scoring / Nueva Solicitud</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="icon-btn notification-btn"><i class="fas fa-bell"></i><span class="badge">3</span></button>
+        <div class="header-user">
+          <div class="user-avatar sm"><i class="fas fa-user"></i></div>
+          <span>Admin</span>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+      </div>
+    </header>
+
+    <div class="content-area">
+      <div class="scoring-container">
+        <!-- Progress bar -->
+        <div class="glass-card progress-card">
+          <div class="steps-header">
+            <div class="step-item active" data-step="1">
+              <div class="step-circle"><i class="fas fa-user"></i></div>
+              <span>Datos Personales</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step-item" data-step="2">
+              <div class="step-circle"><i class="fas fa-coins"></i></div>
+              <span>Información Financiera</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step-item" data-step="3">
+              <div class="step-circle"><i class="fas fa-building"></i></div>
+              <span>Inmueble</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step-item" data-step="4">
+              <div class="step-circle"><i class="fas fa-file-check"></i></div>
+              <span>Documentación</span>
+            </div>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progressFill" style="width:25%"></div>
+          </div>
+          <div class="progress-label">Paso <span id="currentStepLabel">1</span> de 4</div>
+        </div>
+
+        <!-- Form -->
+        <form id="scoringForm" novalidate>
+
+          <!-- Step 1: Datos personales -->
+          <div class="form-step active" id="step1">
+            <div class="glass-card form-card">
+              <div class="form-card-header">
+                <div class="form-card-icon"><i class="fas fa-user-tie"></i></div>
+                <div>
+                  <h3>Datos Personales</h3>
+                  <p>Información básica del solicitante</p>
+                </div>
+              </div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Nombre completo <span class="required">*</span></label>
+                  <div class="input-wrapper">
+                    <input type="text" id="full_name" name="full_name" placeholder="Ej. Carlos Mendoza Ruiz" required />
+                    <span class="input-focus-bar"></span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Edad <span class="required">*</span></label>
+                  <div class="input-wrapper">
+                    <input type="number" id="age" name="age" placeholder="Ej. 35" min="18" max="80" required />
+                    <span class="input-focus-bar"></span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>CURP <span class="required">*</span></label>
+                  <div class="input-wrapper">
+                    <input type="text" id="curp" name="curp" placeholder="XXXX000000XXXXXX00" maxlength="18" required />
+                    <span class="input-focus-bar"></span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>RFC <span class="required">*</span></label>
+                  <div class="input-wrapper">
+                    <input type="text" id="rfc" name="rfc" placeholder="XXXX000000XXX" maxlength="13" required />
+                    <span class="input-focus-bar"></span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Correo electrónico</label>
+                  <div class="input-wrapper">
+                    <input type="email" id="email" name="email" placeholder="correo@ejemplo.com" />
+                    <span class="input-focus-bar"></span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Teléfono</label>
+                  <div class="input-wrapper">
+                    <input type="tel" id="phone" name="phone" placeholder="55 1234 5678" />
+                    <span class="input-focus-bar"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Información financiera -->
+          <div class="form-step" id="step2">
+            <div class="glass-card form-card">
+              <div class="form-card-header">
+                <div class="form-card-icon"><i class="fas fa-coins"></i></div>
+                <div>
+                  <h3>Información Financiera</h3>
+                  <p>Ingresos, deudas e historial crediticio</p>
+                </div>
+              </div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Ingreso mensual neto (MXN) <span class="required">*</span></label>
+                  <div class="input-wrapper input-prefix">
+                    <span class="prefix">$</span>
+                    <input type="number" id="monthly_income" name="monthly_income" placeholder="50,000" min="0" required />
+                    <span class="input-focus-bar"></span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Deudas mensuales totales (MXN) <span class="required">*</span></label>
+                  <div class="input-wrapper input-prefix">
+                    <span class="prefix">$</span>
+                    <input type="number" id="monthly_debts" name="monthly_debts" placeholder="10,000" min="0" required />
+                    <span class="input-focus-bar"></span>
+                  </div>
+                </div>
+                <div class="form-group full-width">
+                  <label>Historial crediticio <span class="required">*</span></label>
+                  <div class="radio-group">
+                    <label class="radio-card">
+                      <input type="radio" name="credit_history" value="excelente" />
+                      <div class="radio-content">
+                        <i class="fas fa-star"></i>
+                        <span>Excelente</span>
+                        <small>Sin atrasos, score alto</small>
+                      </div>
+                    </label>
+                    <label class="radio-card">
+                      <input type="radio" name="credit_history" value="bueno" checked />
+                      <div class="radio-content">
+                        <i class="fas fa-thumbs-up"></i>
+                        <span>Bueno</span>
+                        <small>Pocos atrasos menores</small>
+                      </div>
+                    </label>
+                    <label class="radio-card">
+                      <input type="radio" name="credit_history" value="regular" />
+                      <div class="radio-content">
+                        <i class="fas fa-minus"></i>
+                        <span>Regular</span>
+                        <small>Algunos atrasos</small>
+                      </div>
+                    </label>
+                    <label class="radio-card">
+                      <input type="radio" name="credit_history" value="malo" />
+                      <div class="radio-content">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <span>Malo</span>
+                        <small>Historial negativo</small>
+                      </div>
+                    </label>
+                    <label class="radio-card">
+                      <input type="radio" name="credit_history" value="sin_historial" />
+                      <div class="radio-content">
+                        <i class="fas fa-question"></i>
+                        <span>Sin historial</span>
+                        <small>Primera vez</small>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Antigüedad laboral (años)</label>
+                  <div class="input-wrapper">
+                    <input type="number" id="work_years" name="work_years" placeholder="5" min="0" />
+                    <span class="input-focus-bar"></span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Tipo de empleo</label>
+                  <div class="input-wrapper">
+                    <select id="employment_type" name="employment_type">
+                      <option value="empleado">Empleado formal</option>
+                      <option value="independiente">Independiente / Freelance</option>
+                      <option value="empresario">Empresario</option>
+                      <option value="pensionado">Pensionado / Jubilado</option>
+                    </select>
+                    <span class="input-focus-bar"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Información del inmueble -->
+          <div class="form-step" id="step3">
+            <div class="glass-card form-card">
+              <div class="form-card-header">
+                <div class="form-card-icon"><i class="fas fa-house-chimney"></i></div>
+                <div>
+                  <h3>Información del Inmueble</h3>
+                  <p>Detalles de la propiedad a financiar</p>
+                </div>
+              </div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Valor del inmueble (MXN) <span class="required">*</span></label>
+                  <div class="input-wrapper input-prefix">
+                    <span class="prefix">$</span>
+                    <input type="number" id="property_value" name="property_value" placeholder="2,500,000" min="0" required />
+                    <span class="input-focus-bar"></span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Monto del crédito solicitado (MXN) <span class="required">*</span></label>
+                  <div class="input-wrapper input-prefix">
+                    <span class="prefix">$</span>
+                    <input type="number" id="loan_amount" name="loan_amount" placeholder="2,000,000" min="0" required />
+                    <span class="input-focus-bar"></span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Tipo de inmueble <span class="required">*</span></label>
+                  <div class="input-wrapper">
+                    <select id="property_type" name="property_type" required>
+                      <option value="casa">Casa habitación</option>
+                      <option value="departamento">Departamento</option>
+                      <option value="terreno">Terreno</option>
+                      <option value="local">Local comercial</option>
+                      <option value="oficina">Oficina</option>
+                    </select>
+                    <span class="input-focus-bar"></span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Estado / Ciudad <span class="required">*</span></label>
+                  <div class="input-wrapper">
+                    <input type="text" id="location" name="location" placeholder="Ej. Ciudad de México, CDMX" required />
+                    <span class="input-focus-bar"></span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Uso del inmueble</label>
+                  <div class="input-wrapper">
+                    <select id="property_use" name="property_use">
+                      <option value="vivienda_propia">Vivienda propia</option>
+                      <option value="inversion">Inversión / Renta</option>
+                      <option value="comercial">Uso comercial</option>
+                    </select>
+                    <span class="input-focus-bar"></span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Plazo del crédito (años)</label>
+                  <div class="input-wrapper">
+                    <select id="loan_term" name="loan_term">
+                      <option value="10">10 años</option>
+                      <option value="15">15 años</option>
+                      <option value="20" selected>20 años</option>
+                      <option value="25">25 años</option>
+                      <option value="30">30 años</option>
+                    </select>
+                    <span class="input-focus-bar"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 4: Documentación -->
+          <div class="form-step" id="step4">
+            <div class="glass-card form-card">
+              <div class="form-card-header">
+                <div class="form-card-icon"><i class="fas fa-folder-open"></i></div>
+                <div>
+                  <h3>Documentación</h3>
+                  <p>Confirma los documentos disponibles</p>
+                </div>
+              </div>
+              <div class="docs-grid">
+                <label class="doc-card">
+                  <input type="checkbox" name="doc_ine" value="1" class="doc-check" />
+                  <div class="doc-content">
+                    <div class="doc-icon"><i class="fas fa-id-card"></i></div>
+                    <div class="doc-info">
+                      <span class="doc-name">Identificación oficial (INE/Pasaporte)</span>
+                      <span class="doc-desc">Vigente, ambos lados</span>
+                    </div>
+                    <div class="doc-check-icon"><i class="fas fa-check-circle"></i></div>
+                  </div>
+                </label>
+                <label class="doc-card">
+                  <input type="checkbox" name="doc_comprobante" value="1" class="doc-check" />
+                  <div class="doc-content">
+                    <div class="doc-icon"><i class="fas fa-file-invoice"></i></div>
+                    <div class="doc-info">
+                      <span class="doc-name">Comprobante de ingresos</span>
+                      <span class="doc-desc">Últimos 3 recibos de nómina o estados de cuenta</span>
+                    </div>
+                    <div class="doc-check-icon"><i class="fas fa-check-circle"></i></div>
+                  </div>
+                </label>
+                <label class="doc-card">
+                  <input type="checkbox" name="doc_domicilio" value="1" class="doc-check" />
+                  <div class="doc-content">
+                    <div class="doc-icon"><i class="fas fa-map-marker-alt"></i></div>
+                    <div class="doc-info">
+                      <span class="doc-name">Comprobante de domicilio</span>
+                      <span class="doc-desc">No mayor a 3 meses</span>
+                    </div>
+                    <div class="doc-check-icon"><i class="fas fa-check-circle"></i></div>
+                  </div>
+                </label>
+                <label class="doc-card">
+                  <input type="checkbox" name="doc_buro" value="1" class="doc-check" />
+                  <div class="doc-content">
+                    <div class="doc-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="doc-info">
+                      <span class="doc-name">Reporte de Buró de Crédito</span>
+                      <span class="doc-desc">Autorización firmada</span>
+                    </div>
+                    <div class="doc-check-icon"><i class="fas fa-check-circle"></i></div>
+                  </div>
+                </label>
+                <label class="doc-card">
+                  <input type="checkbox" name="doc_avaluo" value="1" class="doc-check" />
+                  <div class="doc-content">
+                    <div class="doc-icon"><i class="fas fa-house-circle-check"></i></div>
+                    <div class="doc-info">
+                      <span class="doc-name">Avalúo del inmueble</span>
+                      <span class="doc-desc">Realizado por perito certificado</span>
+                    </div>
+                    <div class="doc-check-icon"><i class="fas fa-check-circle"></i></div>
+                  </div>
+                </label>
+              </div>
+              <div class="docs-counter">
+                <span id="docsCount">0</span> de 5 documentos seleccionados
+              </div>
+            </div>
+          </div>
+
+          <!-- Navigation buttons -->
+          <div class="form-nav">
+            <button type="button" class="btn-outline" id="prevBtn" onclick="changeStep(-1)" style="display:none">
+              <i class="fas fa-arrow-left"></i> Anterior
+            </button>
+            <button type="button" class="btn-primary" id="nextBtn" onclick="changeStep(1)">
+              Siguiente <i class="fas fa-arrow-right"></i>
+            </button>
+            <button type="submit" class="btn-primary btn-submit hidden" id="submitBtn">
+              <i class="fas fa-calculator"></i> Calcular Score
+              <span class="btn-loader hidden"><i class="fas fa-circle-notch fa-spin"></i></span>
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+  // Doc counter
+  document.querySelectorAll('.doc-check').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const count = document.querySelectorAll('.doc-check:checked').length;
+      document.getElementById('docsCount').textContent = count;
+    });
+  });
+
+  // Form submit
+  document.getElementById('scoringForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.querySelector('.btn-loader').classList.remove('hidden');
+    submitBtn.querySelector('i.fa-calculator') && submitBtn.querySelector('i.fa-calculator').classList.add('hidden');
+    submitBtn.disabled = true;
+    showLoading('Analizando perfil crediticio...');
+
+    const docsChecked = document.querySelectorAll('.doc-check:checked').length;
+    const creditHistory = document.querySelector('input[name="credit_history"]:checked');
+
+    const payload = {
+      full_name:       document.getElementById('full_name').value,
+      age:             document.getElementById('age').value,
+      monthly_income:  document.getElementById('monthly_income').value,
+      monthly_debts:   document.getElementById('monthly_debts').value,
+      credit_history:  creditHistory ? creditHistory.value : 'bueno',
+      property_value:  document.getElementById('property_value').value,
+      loan_amount:     document.getElementById('loan_amount').value,
+      property_type:   document.getElementById('property_type').value,
+      docs_complete:   docsChecked,
+    };
+
+    try {
+      const res  = await fetch('/calculate-score', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.total_score !== undefined) {
+        showToast('Score calculado correctamente. Redirigiendo...', 'success', 2000);
+        setTimeout(() => { window.location.href = '/report'; }, 1200);
+      } else {
+        hideLoading();
+        showToast('Error al calcular el score. Intenta de nuevo.', 'error');
+      }
+    } catch(err) {
+      hideLoading();
+      showToast('Error de conexión. Intenta de nuevo.', 'error');
+    } finally {
+      submitBtn.querySelector('.btn-loader').classList.add('hidden');
+      submitBtn.querySelector('i.fa-calculator') && submitBtn.querySelector('i.fa-calculator').classList.remove('hidden');
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

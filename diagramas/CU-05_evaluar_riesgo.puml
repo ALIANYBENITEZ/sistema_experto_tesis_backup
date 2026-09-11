@@ -1,0 +1,14 @@
+@startuml
+left to right direction
+
+actor Operador as OPER
+
+rectangle "Sistema de Evaluacion de Riesgo" {
+    usecase "Evaluar riesgo de cliente" as CU05
+    usecase "Verificar lista de sanciones" as LN
+}
+
+OPER --> CU05
+CU05 ..> LN : include
+
+@enduml

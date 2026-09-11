@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScoreHouse – Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body class="app-page">
+
+  <div class="app-layout">
+
+    <!-- ── Sidebar ─────────────────────────────────────────────────────── -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="logo-icon sm">
+          <i class="fas fa-house-chimney"></i>
+        </div>
+        <span class="logo-text">Score<span class="logo-accent">House</span></span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Principal</div>
+        <a href="/dashboard" class="nav-item active">
+          <i class="fas fa-gauge-high"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="/scoring" class="nav-item">
+          <i class="fas fa-file-invoice-dollar"></i>
+          <span>Nueva Solicitud</span>
+        </a>
+        <a href="/report" class="nav-item">
+          <i class="fas fa-chart-bar"></i>
+          <span>Reportes</span>
+        </a>
+
+        <div class="nav-section-label">Gestión</div>
+        <a href="#" class="nav-item">
+          <i class="fas fa-users"></i>
+          <span>Clientes</span>
+        </a>
+        <a href="#" class="nav-item">
+          <i class="fas fa-building"></i>
+          <span>Inmuebles</span>
+        </a>
+        <a href="#" class="nav-item">
+          <i class="fas fa-sliders"></i>
+          <span>Configuración</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-mini">
+          <div class="user-avatar">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="user-info">
+            <span class="user-name">Admin</span>
+            <span class="user-role">Analista Senior</span>
+          </div>
+        </div>
+        <a href="/" class="logout-btn" title="Cerrar sesión">
+          <i class="fas fa-right-from-bracket"></i>
+        </a>
+      </div>
+    </aside>
+
+    <!-- ── Main content ────────────────────────────────────────────────── -->
+    <main class="main-content">
+
+      <!-- Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="page-title">
+            <h1>Dashboard</h1>
+            <span class="breadcrumb">Inicio / Dashboard</span>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="header-search">
+            <i class="fas fa-magnifying-glass"></i>
+            <input type="text" placeholder="Buscar solicitud..." />
+          </div>
+          <button class="icon-btn notification-btn">
+            <i class="fas fa-bell"></i>
+            <span class="badge">3</span>
+          </button>
+          <div class="header-user">
+            <div class="user-avatar sm">
+              <i class="fas fa-user"></i>
+            </div>
+            <span>Admin</span>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <div class="content-area">
+
+        <!-- Welcome banner -->
+        <div class="welcome-banner">
+          <div class="welcome-text">
+            <h2>Buen día, Analista <span class="text-accent">👋</span></h2>
+            <p>Aquí tienes el resumen de actividad crediticia de hoy.</p>
+          </div>
+          <a href="/scoring" class="btn-primary">
+            <i class="fas fa-plus"></i> Nueva Solicitud
+          </a>
+        </div>
+
+        <!-- Stats cards -->
+        <div class="stats-grid">
+          <div class="stat-card" data-color="purple">
+            <div class="stat-icon">
+              <i class="fas fa-file-lines"></i>
+            </div>
+            <div class="stat-body">
+              <span class="stat-label">Total Solicitudes</span>
+              <span class="stat-value counter" data-target="{{ stats.total }}">0</span>
+              <span class="stat-change positive"><i class="fas fa-arrow-trend-up"></i> +12% este mes</span>
+            </div>
+            <div class="stat-sparkline">
+              <canvas id="sparkline1" width="80" height="40"></canvas>
+            </div>
+          </div>
+
+          <div class="stat-card" data-color="green">
+            <div class="stat-icon">
+              <i class="fas fa-circle-check"></i>
+            </div>
+            <div class="stat-body">
+              <span class="stat-label">Aprobadas</span>
+              <span class="stat-value counter" data-target="{{ stats.approved }}">0</span>
+              <span class="stat-change positive"><i class="fas fa-arrow-trend-up"></i> +8% este mes</span>
+            </div>
+            <div class="stat-sparkline">
+              <canvas id="sparkline2" width="80" height="40"></canvas>
+            </div>
+          </div>
+
+          <div class="stat-card" data-color="red">
+            <div class="stat-icon">
+              <i class="fas fa-circle-xmark"></i>
+            </div>
+            <div class="stat-body">
+              <span class="stat-label">Rechazadas</span>
+              <span class="stat-value counter" data-target="{{ stats.rejected }}">0</span>
+              <span class="stat-change negative"><i class="fas fa-arrow-trend-down"></i> -3% este mes</span>
+            </div>
+            <div class="stat-sparkline">
+              <canvas id="sparkline3" width="80" height="40"></canvas>
+            </div>
+          </div>
+
+          <div class="stat-card" data-color="gold">
+            <div class="stat-icon">
+              <i class="fas fa-clock-rotate-left"></i>
+            </div>
+            <div class="stat-body">
+              <span class="stat-label">En Revisión</span>
+              <span class="stat-value counter" data-target="{{ stats.in_review }}">0</span>
+              <span class="stat-change neutral"><i class="fas fa-minus"></i> Sin cambio</span>
+            </div>
+            <div class="stat-sparkline">
+              <canvas id="sparkline4" width="80" height="40"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts row -->
+        <div class="charts-row">
+          <div class="glass-card chart-card wide">
+            <div class="card-header">
+              <h3><i class="fas fa-chart-line"></i> Solicitudes por Mes</h3>
+              <div class="chart-legend">
+                <span class="legend-dot purple"></span> Aprobadas
+                <span class="legend-dot red"></span> Rechazadas
+                <span class="legend-dot gold"></span> En revisión
+              </div>
+            </div>
+            <canvas id="mainChart" height="100"></canvas>
+          </div>
+
+          <div class="glass-card chart-card narrow">
+            <div class="card-header">
+              <h3><i class="fas fa-chart-pie"></i> Distribución</h3>
+            </div>
+            <canvas id="donutChart" height="200"></canvas>
+            <div class="donut-legend">
+              <div class="donut-item">
+                <span class="legend-dot green"></span>
+                <span>Aprobadas</span>
+                <strong>{{ stats.approved }}</strong>
+              </div>
+              <div class="donut-item">
+                <span class="legend-dot red"></span>
+                <span>Rechazadas</span>
+                <strong>{{ stats.rejected }}</strong>
+              </div>
+              <div class="donut-item">
+                <span class="legend-dot gold"></span>
+                <span>En revisión</span>
+                <strong>{{ stats.in_review }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent applications table -->
+        <div class="glass-card table-card">
+          <div class="card-header">
+            <h3><i class="fas fa-list-check"></i> Solicitudes Recientes</h3>
+            <a href="/scoring" class="btn-outline sm">
+              <i class="fas fa-plus"></i> Nueva
+            </a>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Solicitante</th>
+                  <th>Monto</th>
+                  <th>Score</th>
+                  <th>Estado</th>
+                  <th>Fecha</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for app in applications %}
+                <tr class="table-row-animate">
+                  <td><span class="app-id">{{ app.id }}</span></td>
+                  <td>
+                    <div class="applicant-cell">
+                      <div class="applicant-avatar">{{ app.name[0] }}</div>
+                      <span>{{ app.name }}</span>
+                    </div>
+                  </td>
+                  <td class="amount-cell">{{ app.amount }}</td>
+                  <td>
+                    <div class="score-pill" data-score="{{ app.score }}">
+                      <span class="score-num">{{ app.score }}</span>
+                      <div class="score-mini-bar">
+                        <div class="score-mini-fill" style="width: {{ (app.score / 1000 * 100)|round }}%"></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="status-badge status-{{ app.status | lower | replace('ó','o') | replace('é','e') }}">
+                      {% if app.status == 'Aprobado' %}<i class="fas fa-check"></i>
+                      {% elif app.status == 'Rechazado' %}<i class="fas fa-xmark"></i>
+                      {% else %}<i class="fas fa-clock"></i>{% endif %}
+                      {{ app.status }}
+                    </span>
+                  </td>
+                  <td class="date-cell">{{ app.date }}</td>
+                  <td>
+                    <div class="action-btns">
+                      <button class="icon-btn sm" title="Ver reporte" onclick="window.location.href='/report'">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button class="icon-btn sm" title="Descargar">
+                        <i class="fas fa-download"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div><!-- /content-area -->
+    </main>
+  </div><!-- /app-layout -->
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>
+    // ── Counter animation ──────────────────────────────────────────────────
+    document.querySelectorAll('.counter').forEach(el => {
+      const target = parseInt(el.dataset.target);
+      animateCounter(el, target);
+    });
+
+    // ── Sparklines ─────────────────────────────────────────────────────────
+    const sparkOpts = (color, data) => ({
+      type: 'line',
+      data: {
+        labels: data.map((_, i) => i),
+        datasets: [{
+          data,
+          borderColor: color,
+          borderWidth: 2,
+          fill: true,
+          backgroundColor: color + '22',
+          tension: 0.4,
+          pointRadius: 0,
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales:  { x: { display: false }, y: { display: false } },
+        animation: { duration: 1000 },
+      }
+    });
+
+    new Chart(document.getElementById('sparkline1'), sparkOpts('#6C63FF', [3,5,4,7,6,8,9,10,12,11]));
+    new Chart(document.getElementById('sparkline2'), sparkOpts('#00D4AA', [2,3,3,5,4,6,7,8,9,10]));
+    new Chart(document.getElementById('sparkline3'), sparkOpts('#FF4757', [5,4,3,4,2,3,2,1,2,1]));
+    new Chart(document.getElementById('sparkline4'), sparkOpts('#FFD700', [1,2,2,3,2,3,2,2,3,2]));
+
+    // ── Main line chart ────────────────────────────────────────────────────
+    const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    new Chart(document.getElementById('mainChart'), {
+      type: 'line',
+      data: {
+        labels: months,
+        datasets: [
+          {
+            label: 'Aprobadas',
+            data: [12,19,15,22,18,25,20,28,24,30,26,32],
+            borderColor: '#6C63FF',
+            backgroundColor: 'rgba(108,99,255,0.1)',
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#6C63FF',
+            pointRadius: 4,
+          },
+          {
+            label: 'Rechazadas',
+            data: [5,8,6,9,7,10,8,11,9,12,10,8],
+            borderColor: '#FF4757',
+            backgroundColor: 'rgba(255,71,87,0.05)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#FF4757',
+            pointRadius: 4,
+          },
+          {
+            label: 'En revisión',
+            data: [3,4,5,4,6,5,7,6,8,7,9,6],
+            borderColor: '#FFD700',
+            backgroundColor: 'rgba(255,215,0,0.05)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#FFD700',
+            pointRadius: 4,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(10,14,39,0.9)',
+            borderColor: 'rgba(108,99,255,0.3)',
+            borderWidth: 1,
+            titleColor: '#fff',
+            bodyColor: '#aaa',
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { color: '#888' }
+          },
+          y: {
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { color: '#888' }
+          }
+        }
+      }
+    });
+
+    // ── Donut chart ────────────────────────────────────────────────────────
+    new Chart(document.getElementById('donutChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Aprobadas', 'Rechazadas', 'En revisión'],
+        datasets: [{
+          data: [{{ stats.approved }}, {{ stats.rejected }}, {{ stats.in_review }}],
+          backgroundColor: ['#00D4AA', '#FF4757', '#FFD700'],
+          borderColor: 'transparent',
+          hoverOffset: 8,
+        }]
+      },
+      options: {
+        cutout: '72%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(10,14,39,0.9)',
+            borderColor: 'rgba(108,99,255,0.3)',
+            borderWidth: 1,
+          }
+        }
+      }
+    });
+
+    // ── Score pill colors ──────────────────────────────────────────────────
+    document.querySelectorAll('.score-pill').forEach(pill => {
+      const score = parseInt(pill.dataset.score);
+      const fill  = pill.querySelector('.score-mini-fill');
+      if (score >= 750) {
+        fill.style.background = '#00D4AA';
+      } else if (score >= 600) {
+        fill.style.background = '#FFD700';
+      } else {
+        fill.style.background = '#FF4757';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - DB_SERVER=db
+      - DB_NAME=inmobiliaria_db
+      - DB_USER=sa
+      - DB_PASSWORD=${DB_PASSWORD:-Admin2026!}
+      - DB_DRIVER=ODBC Driver 17 for SQL Server
+      - SECRET_KEY=${SECRET_KEY:-produccion-secret-key-segura}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-produccion-jwt-key-segura}
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${DB_PASSWORD:-Admin2026!}
+      - MSSQL_PID=Express
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:

@@ -1,0 +1,251 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>Especificacion de Casos de Uso</title>
+<!--[if gte mso 9]>
+<xml>
+<w:WordDocument>
+<w:View>Print</w:View>
+<w:Zoom>100</w:Zoom>
+</w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+  @page { size: A4; margin: 2cm; }
+  body { font-family: "Times New Roman", serif; font-size: 12pt; color: #000000; }
+  h1 { font-size: 16pt; text-align: center; color: #000000; font-weight: bold; }
+  .sub { text-align: center; font-size: 11pt; color: #000000; margin-bottom: 18pt; }
+  h2 { font-size: 13pt; color: #000000; font-weight: bold; margin: 18pt 0 6pt; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 22pt; }
+  td, th { border: 1px solid #000000; padding: 5pt 8pt; vertical-align: top; color: #000000; font-size: 11pt; }
+  td.lbl { width: 150px; font-weight: bold; }
+  .paso b { font-weight: bold; }
+  p { margin: 0 0 4pt; }
+</style>
+</head>
+<body>
+
+<h1>Especificación de Casos de Uso</h1>
+<p class="sub">Sistema de Evaluación de Riesgo Crediticio para Inmobiliaria</p>
+
+<!-- CU-01 -->
+<h2>CU-01 — Iniciar sesión con 2FA</h2>
+<table>
+  <tr><td class="lbl">CU-01</td><td>Iniciar sesión con 2FA</td></tr>
+  <tr><td class="lbl">Actores</td><td>Propietario, Administrador, Operador</td></tr>
+  <tr><td class="lbl">Dependencias</td><td>
+    <p>RF-07 Autenticación de usuarios con doble factor.</p>
+    <p>RNF-03 Seguridad de autenticación y control de acceso.</p>
+    <p>RNF-04 Almacenamiento seguro de contraseñas (hash).</p>
+  </td></tr>
+  <tr><td class="lbl">Precondición</td><td>El usuario está registrado y activo en el sistema.</td></tr>
+  <tr><td class="lbl">Descripción</td><td>Define el proceso mediante el cual un usuario se autentica con credenciales y un segundo factor (código TOTP) antes de acceder al sistema, aplicando el control de acceso según su rol.</td></tr>
+  <tr><td class="lbl">Secuencia normal</td><td>
+    <p><b>1.</b> El usuario ingresa su correo y contraseña y presiona "Ingresar".</p>
+    <p><b>2.</b> El sistema valida las credenciales contra la base de datos.</p>
+    <p><b>3.</b> El sistema solicita el código de doble factor (OTP).</p>
+    <p><b>4.</b> El usuario ingresa el código de su aplicación de autenticación.</p>
+    <p><b>5.</b> El sistema valida el código y genera el token de sesión.</p>
+    <p><b>6.</b> El sistema concede el acceso según el rol del usuario y registra el evento en auditoría.</p>
+  </td></tr>
+  <tr><td class="lbl">Postcondición</td><td>El usuario queda autenticado con una sesión activa y el inicio de sesión queda registrado en la auditoría.</td></tr>
+  <tr><td class="lbl">Excepciones</td><td>
+    <p><b>2.</b> Si las credenciales son incorrectas: el sistema muestra "Credenciales incorrectas", registra el intento fallido y retorna al paso 1.</p>
+    <p><b>4.</b> Si es el primer inicio de sesión: el sistema muestra el código QR para configurar el 2FA antes de continuar.</p>
+    <p><b>5.</b> Si el código OTP es incorrecto: el sistema deniega el acceso y solicita reintentar.</p>
+  </td></tr>
+</table>
+
+<!-- CU-02 -->
+<h2>CU-02 — Gestionar usuarios</h2>
+<table>
+  <tr><td class="lbl">CU-02</td><td>Gestionar usuarios</td></tr>
+  <tr><td class="lbl">Actores</td><td>Administrador, Propietario</td></tr>
+  <tr><td class="lbl">Dependencias</td><td>
+    <p>RF-10 Gestión de usuarios (alta, edición, baja).</p>
+    <p>RF-08 Control de acceso por roles.</p>
+    <p>RNF-03 Control de acceso basado en roles (RBAC).</p>
+    <p>RNF-10 Trazabilidad y auditoría.</p>
+  </td></tr>
+  <tr><td class="lbl">Precondición</td><td>El usuario ha iniciado sesión con rol administrador o propietario.</td></tr>
+  <tr><td class="lbl">Descripción</td><td>Define el proceso mediante el cual un administrador da de alta, edita, activa o desactiva usuarios y les asigna su rol correspondiente.</td></tr>
+  <tr><td class="lbl">Secuencia normal</td><td>
+    <p><b>1.</b> El administrador accede al módulo de usuarios.</p>
+    <p><b>2.</b> El sistema lista los usuarios de su empresa.</p>
+    <p><b>3.</b> El administrador crea un usuario o selecciona uno existente para editar.</p>
+    <p><b>4.</b> El administrador ingresa/edita los datos y asigna el rol, y presiona "Guardar".</p>
+    <p><b>5.</b> El sistema valida los datos, guarda los cambios y registra el evento en auditoría.</p>
+  </td></tr>
+  <tr><td class="lbl">Postcondición</td><td>El usuario queda creado, modificado o desactivado, y el cambio queda registrado en la auditoría.</td></tr>
+  <tr><td class="lbl">Excepciones</td><td>
+    <p><b>4.</b> Si el correo del usuario ya existe: el sistema muestra un mensaje de duplicidad y mantiene los datos para su corrección.</p>
+    <p><b>5.</b> Si el usuario no tiene permisos: el sistema deniega la acción.</p>
+  </td></tr>
+</table>
+
+<!-- CU-03 -->
+<h2>CU-03 — Gestionar clientes</h2>
+<table>
+  <tr><td class="lbl">CU-03</td><td>Gestionar clientes</td></tr>
+  <tr><td class="lbl">Actores</td><td>Operador, Administrador</td></tr>
+  <tr><td class="lbl">Dependencias</td><td>
+    <p>RF-01 Registro de clientes.</p>
+    <p>RF-02 Gestión de clientes (ver, editar, eliminar).</p>
+    <p>RNF-04 Protección de la información del cliente.</p>
+    <p>RNF-10 Trazabilidad y auditoría.</p>
+  </td></tr>
+  <tr><td class="lbl">Precondición</td><td>El usuario ha iniciado sesión y está autorizado.</td></tr>
+  <tr><td class="lbl">Descripción</td><td>Define el proceso mediante el cual un operador registra, visualiza, edita o da de baja clientes (personas físicas o jurídicas), asegurando la unicidad del documento.</td></tr>
+  <tr><td class="lbl">Secuencia normal</td><td>
+    <p><b>1.</b> El usuario accede al módulo de clientes.</p>
+    <p><b>2.</b> El sistema lista los clientes de la empresa.</p>
+    <p><b>3.</b> El usuario registra un nuevo cliente o selecciona uno existente.</p>
+    <p><b>4.</b> El usuario ingresa/edita los datos personales y financieros y presiona "Guardar".</p>
+    <p><b>5.</b> El sistema valida que el documento (DNI/RUC/CE) no esté duplicado.</p>
+    <p><b>6.</b> El sistema guarda la información y registra el evento en auditoría.</p>
+  </td></tr>
+  <tr><td class="lbl">Postcondición</td><td>El cliente queda registrado, actualizado o dado de baja, y el evento queda registrado en la auditoría.</td></tr>
+  <tr><td class="lbl">Excepciones</td><td>
+    <p><b>5.</b> Si el documento ya está registrado: el sistema muestra un mensaje de duplicidad y mantiene los datos para su corrección. Retorna al paso 4.</p>
+  </td></tr>
+</table>
+
+<!-- CU-04 -->
+<h2>CU-04 — Configurar motor de reglas y criterios</h2>
+<table>
+  <tr><td class="lbl">CU-04</td><td>Configurar motor de reglas y criterios</td></tr>
+  <tr><td class="lbl">Actores</td><td>Administrador</td></tr>
+  <tr><td class="lbl">Dependencias</td><td>
+    <p>RF-03 Evaluación de scoring mediante reglas configurables (configuración).</p>
+    <p>RF-12 Evaluación por criterios ponderados.</p>
+    <p>RNF-08 Escalabilidad / configurabilidad.</p>
+    <p>RNF-10 Trazabilidad y auditoría.</p>
+  </td></tr>
+  <tr><td class="lbl">Precondición</td><td>El usuario ha iniciado sesión con rol administrador.</td></tr>
+  <tr><td class="lbl">Descripción</td><td>Define el proceso mediante el cual un administrador configura el motor de reglas IF-THEN (parámetros, operadores, pesos, reglas determinantes y umbrales) y los criterios de evaluación ponderada.</td></tr>
+  <tr><td class="lbl">Secuencia normal</td><td>
+    <p><b>1.</b> El administrador accede a la configuración del motor de scoring.</p>
+    <p><b>2.</b> Crea un modelo/motor de reglas o selecciona uno existente.</p>
+    <p><b>3.</b> Define las reglas con su parámetro, operador, valor de referencia y peso.</p>
+    <p><b>4.</b> Marca las reglas determinantes cuando corresponda.</p>
+    <p><b>5.</b> Configura los umbrales de clasificación (bajo, medio, alto).</p>
+    <p><b>6.</b> El sistema valida y guarda la configuración, y registra el evento en auditoría.</p>
+  </td></tr>
+  <tr><td class="lbl">Postcondición</td><td>El modelo de reglas/criterios queda configurado y disponible para las evaluaciones.</td></tr>
+  <tr><td class="lbl">Excepciones</td><td>
+    <p><b>3.</b> Si una regla tiene datos inconsistentes: el sistema muestra un error y no la guarda.</p>
+    <p><b>5.</b> Si los umbrales se solapan o son inválidos: el sistema rechaza la configuración.</p>
+  </td></tr>
+</table>
+
+<!-- CU-05 -->
+<h2>CU-05 — Evaluar riesgo de cliente (caso de uso central)</h2>
+<table>
+  <tr><td class="lbl">CU-05</td><td>Evaluar riesgo de cliente</td></tr>
+  <tr><td class="lbl">Actores</td><td>Operador</td></tr>
+  <tr><td class="lbl">Dependencias</td><td>
+    <p>RF-03 Evaluación de scoring mediante reglas.</p>
+    <p>RF-04 Clasificación de riesgo (bajo/medio/alto/rechazado).</p>
+    <p>RF-05 Verificación contra listas de sanciones (ONU/OFAC).</p>
+    <p>RNF-01 Tiempo de respuesta (menor o igual a 3 s).</p>
+    <p>RNF-10 Trazabilidad y auditoría.</p>
+  </td></tr>
+  <tr><td class="lbl">Precondición</td><td>El usuario ha iniciado sesión y está autorizado; el cliente está registrado y existe un motor de reglas activo.</td></tr>
+  <tr><td class="lbl">Descripción</td><td>Define el proceso mediante el cual un operador ejecuta la evaluación de riesgo de un cliente aplicando el motor de reglas, verificando listas de sanciones y clasificando el resultado.</td></tr>
+  <tr><td class="lbl">Secuencia normal</td><td>
+    <p><b>1.</b> El operador selecciona un cliente y solicita la evaluación.</p>
+    <p><b>2.</b> El sistema recopila los datos financieros del cliente.</p>
+    <p><b>3.</b> El sistema verifica al cliente contra la lista de sanciones (ONU/OFAC).</p>
+    <p><b>4.</b> El sistema aplica las reglas IF-THEN y calcula el puntaje ponderado.</p>
+    <p><b>5.</b> El sistema clasifica el riesgo en bajo, medio, alto o rechazado.</p>
+    <p><b>6.</b> El sistema genera la explicación y recomendación, muestra y almacena el resultado, y lo registra en auditoría.</p>
+  </td></tr>
+  <tr><td class="lbl">Postcondición</td><td>La evaluación queda almacenada con su puntaje y clasificación, y el evento queda registrado en la auditoría.</td></tr>
+  <tr><td class="lbl">Excepciones</td><td>
+    <p><b>3.</b> Si el cliente coincide con la lista de sanciones: la clasificación se fuerza a alto/rechazado.</p>
+    <p><b>4.</b> Si se incumple una regla determinante: el resultado es "rechazado" de forma directa.</p>
+    <p><b>2.</b> Si faltan datos obligatorios del cliente: la evaluación se marca como incompleta.</p>
+  </td></tr>
+</table>
+
+<!-- CU-06 -->
+<h2>CU-06 — Generar reportes</h2>
+<table>
+  <tr><td class="lbl">CU-06</td><td>Generar reportes</td></tr>
+  <tr><td class="lbl">Actores</td><td>Operador, Administrador</td></tr>
+  <tr><td class="lbl">Dependencias</td><td>
+    <p>RF-06 Generación de reportes.</p>
+    <p>RNF-01 Tiempo de respuesta.</p>
+    <p>RNF-04 Acceso a la información según rol.</p>
+    <p>RNF-09 Compatibilidad con navegadores modernos.</p>
+  </td></tr>
+  <tr><td class="lbl">Precondición</td><td>El usuario ha iniciado sesión y está autorizado; existen evaluaciones registradas.</td></tr>
+  <tr><td class="lbl">Descripción</td><td>Define el proceso mediante el cual un usuario consulta y exporta reportes de las evaluaciones realizadas y visualiza estadísticas en un tablero.</td></tr>
+  <tr><td class="lbl">Secuencia normal</td><td>
+    <p><b>1.</b> El usuario accede al módulo de reportes.</p>
+    <p><b>2.</b> Aplica filtros (fecha, cliente, clasificación).</p>
+    <p><b>3.</b> El sistema muestra las evaluaciones y las estadísticas del tablero.</p>
+    <p><b>4.</b> El usuario solicita la exportación a PDF.</p>
+    <p><b>5.</b> El sistema genera y descarga el reporte en PDF.</p>
+  </td></tr>
+  <tr><td class="lbl">Postcondición</td><td>El reporte se muestra en pantalla o se descarga en PDF.</td></tr>
+  <tr><td class="lbl">Excepciones</td><td>
+    <p><b>3.</b> Si no hay resultados para los filtros: el sistema muestra un aviso.</p>
+    <p><b>5.</b> Si ocurre un error al generar el PDF: el sistema notifica el fallo.</p>
+  </td></tr>
+</table>
+
+<!-- CU-07 -->
+<h2>CU-07 — Consultar auditoría / historial</h2>
+<table>
+  <tr><td class="lbl">CU-07</td><td>Consultar auditoría</td></tr>
+  <tr><td class="lbl">Actores</td><td>Administrador, Propietario</td></tr>
+  <tr><td class="lbl">Dependencias</td><td>
+    <p>RF-09 Auditoría de operaciones y evaluaciones.</p>
+    <p>RNF-10 Trazabilidad y auditoría.</p>
+    <p>RNF-03 Control de acceso basado en roles.</p>
+    <p>RNF-04 No exposición de secretos en la bitácora.</p>
+  </td></tr>
+  <tr><td class="lbl">Precondición</td><td>El usuario ha iniciado sesión con rol administrador o propietario.</td></tr>
+  <tr><td class="lbl">Descripción</td><td>Define el proceso mediante el cual un administrador o el propietario consulta la bitácora de operaciones y evaluaciones. El administrador ve solo la auditoría de su empresa; el propietario ve la de todas las empresas.</td></tr>
+  <tr><td class="lbl">Secuencia normal</td><td>
+    <p><b>1.</b> El usuario accede al módulo de auditoría.</p>
+    <p><b>2.</b> Aplica filtros (fecha, usuario, tipo de evento, módulo, resultado).</p>
+    <p><b>3.</b> El sistema muestra los registros paginados con usuario, fecha/hora, IP y resultado.</p>
+    <p><b>4.</b> El usuario revisa el detalle de un registro específico.</p>
+  </td></tr>
+  <tr><td class="lbl">Postcondición</td><td>El usuario visualiza el historial de operaciones filtrado según su alcance de empresa.</td></tr>
+  <tr><td class="lbl">Excepciones</td><td>
+    <p><b>3.</b> Si no hay registros para los filtros: el sistema muestra un aviso.</p>
+    <p><b>3.</b> Un administrador solo puede ver la auditoría de su propia empresa; el sistema restringe el resto.</p>
+  </td></tr>
+</table>
+
+<!-- CU-08 -->
+<h2>CU-08 — Gestionar empresas</h2>
+<table>
+  <tr><td class="lbl">CU-08</td><td>Gestionar empresas</td></tr>
+  <tr><td class="lbl">Actores</td><td>Propietario</td></tr>
+  <tr><td class="lbl">Dependencias</td><td>
+    <p>RF-11 Gestión multi-empresa (multi-tenant).</p>
+    <p>RNF-03 Acceso exclusivo del propietario.</p>
+    <p>RNF-04 Aislamiento de datos entre empresas.</p>
+    <p>RNF-08 Escalabilidad.</p>
+  </td></tr>
+  <tr><td class="lbl">Precondición</td><td>El usuario ha iniciado sesión con rol propietario.</td></tr>
+  <tr><td class="lbl">Descripción</td><td>Define el proceso mediante el cual el propietario da de alta, edita o desactiva empresas dentro del sistema multi-tenant, garantizando el aislamiento de sus datos.</td></tr>
+  <tr><td class="lbl">Secuencia normal</td><td>
+    <p><b>1.</b> El propietario accede al módulo de empresas.</p>
+    <p><b>2.</b> El sistema lista las empresas registradas.</p>
+    <p><b>3.</b> El propietario crea una empresa o selecciona una existente.</p>
+    <p><b>4.</b> Ingresa/edita los datos de la empresa y presiona "Guardar".</p>
+    <p><b>5.</b> El sistema valida y guarda los cambios, y registra el evento en auditoría.</p>
+  </td></tr>
+  <tr><td class="lbl">Postcondición</td><td>La empresa queda creada, modificada o desactivada, con sus datos aislados del resto.</td></tr>
+  <tr><td class="lbl">Excepciones</td><td>
+    <p><b>4.</b> Si el RUC de la empresa ya existe o los datos son inválidos: el sistema muestra un error y mantiene los datos para su corrección.</p>
+  </td></tr>
+</table>
+
+</body>
+</html>

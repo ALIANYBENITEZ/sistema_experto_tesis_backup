@@ -1,0 +1,125 @@
+@startuml Diagrama_Componentes
+' ============================================================
+' Diagrama de Componentes - Sistema Experto Web de Scoring
+' Arquitectura web multicapa (Presentacion - Logica - Datos)
+' ============================================================
+skinparam componentStyle uml2
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam roundCorner 8
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam component {
+  BackgroundColor #F5F7FA
+  BorderColor #2C3E50
+  FontColor #1A1A1A
+}
+skinparam node {
+  BackgroundColor #EAF2F8
+  BorderColor #2C3E50
+}
+skinparam database {
+  BackgroundColor #E8F6EF
+  BorderColor #1E8449
+}
+skinparam interface {
+  BackgroundColor #FDEBD0
+  BorderColor #B9770E
+}
+
+title Diagrama de Componentes - Sistema Experto Web de Scoring
+
+' ==================== ELEMENTOS EXTERNOS ====================
+actor "Usuario\n(Propietario / Administrador / Operador)" as Usuario
+
+node "Dispositivo del Usuario" as Disp {
+  [Navegador Web] as Browser
+}
+
+node "Aplicacion Movil 2FA" as Movil {
+  [Google Authenticator] as GAuth
+}
+
+' ==================== CAPA DE PRESENTACION ====================
+package "Capa de Presentacion (React + Vite)" as Front #F0F8FF {
+  [SPA Cliente Web] as SPA
+  note bottom of SPA
+    Paginas: Login, Dashboard, Clientes,
+    Evaluaciones, Scoring, Reportes,
+    Usuarios, Empresas, Auditoria,
+    Facturacion, Seguridad
+  end note
+}
+
+' ==================== CAPA DE LOGICA DE NEGOCIO ====================
+package "Capa de Logica de Negocio (Flask REST API)" as Back #FEFEF0 {
+  [Autenticacion y 2FA] as CAuth
+  [Gestion de Usuarios] as CUsers
+  [Gestion de Clientes] as CClients
+  [Motor de Scoring (IF-THEN)] as CScoring
+  [Evaluacion por Criterios] as CEval
+  [Verificacion Lista Negra\n(ONU/OFAC local)] as CBlack
+  [Reportes y Dashboard] as CReports
+  [Auditoria (Bitacora)] as CAudit
+  [Gestion de Empresas\n(Multi-tenant)] as CEmpresas
+  [Facturacion y Consumo] as CFact
+
+  ' Librerias de apoyo
+  [ReportLab\n(Generador PDF)] as LibPDF
+  [PyOTP + qrcode\n(TOTP / QR)] as LibOTP
+  [SQLAlchemy (ORM)] as ORM
+}
+
+' ==================== CAPA DE DATOS ====================
+package "Capa de Datos" as Data #F0FFF4 {
+  database "SQL Server 2022\n(inmobiliaria_db)" as DB {
+    [Triggers de Auditoria] as Trig
+  }
+}
+
+' ==================== INTERFACES ====================
+interface "HTTPS" as IHttps
+interface "API REST /api (JSON + JWT)" as IRest
+interface "ODBC / pyodbc" as IOdbc
+
+' ==================== RELACIONES ====================
+Usuario --> Browser
+Usuario ..> GAuth : escanea QR / ingresa codigo
+
+Browser --> IHttps
+IHttps --> SPA
+
+SPA --> IRest
+IRest --> CAuth
+IRest --> CUsers
+IRest --> CClients
+IRest --> CScoring
+IRest --> CEval
+IRest --> CReports
+IRest --> CEmpresas
+IRest --> CFact
+IRest --> CAudit
+
+' Dependencias internas de la logica
+CScoring ..> CBlack : verifica sanciones
+CEval ..> CBlack : verifica sanciones
+CAuth ..> LibOTP : genera/valida 2FA
+GAuth ..> CAuth : codigo TOTP
+CReports ..> LibPDF : exporta PDF
+
+' Todos los modulos persisten via ORM
+CAuth --> ORM
+CUsers --> ORM
+CClients --> ORM
+CScoring --> ORM
+CEval --> ORM
+CBlack --> ORM
+CReports --> ORM
+CAudit --> ORM
+CEmpresas --> ORM
+CFact --> ORM
+
+ORM --> IOdbc
+IOdbc --> DB
+
+@enduml

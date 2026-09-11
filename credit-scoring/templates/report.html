@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScoreHouse – Reporte de Score</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body class="app-page">
+<div class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-icon sm"><i class="fas fa-house-chimney"></i></div>
+      <span class="logo-text">Score<span class="logo-accent">House</span></span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+      <a href="/dashboard" class="nav-item"><i class="fas fa-gauge-high"></i><span>Dashboard</span></a>
+      <a href="/scoring" class="nav-item"><i class="fas fa-file-invoice-dollar"></i><span>Nueva Solicitud</span></a>
+      <a href="/report" class="nav-item active"><i class="fas fa-chart-bar"></i><span>Reportes</span></a>
+      <div class="nav-section-label">Gestión</div>
+      <a href="#" class="nav-item"><i class="fas fa-users"></i><span>Clientes</span></a>
+      <a href="#" class="nav-item"><i class="fas fa-building"></i><span>Inmuebles</span></a>
+      <a href="#" class="nav-item"><i class="fas fa-sliders"></i><span>Configuración</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-mini">
+        <div class="user-avatar"><i class="fas fa-user"></i></div>
+        <div class="user-info">
+          <span class="user-name">Admin</span>
+          <span class="user-role">Analista Senior</span>
+        </div>
+      </div>
+      <a href="/" class="logout-btn" title="Cerrar sesión"><i class="fas fa-right-from-bracket"></i></a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <header class="top-header">
+      <div class="header-left">
+        <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-title">
+          <h1>Reporte de Score</h1>
+          <span class="breadcrumb">Inicio / Reportes / Resultado</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="icon-btn notification-btn"><i class="fas fa-bell"></i><span class="badge">3</span></button>
+        <div class="header-user">
+          <div class="user-avatar sm"><i class="fas fa-user"></i></div>
+          <span>Admin</span>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+      </div>
+    </header>
+
+    <div class="content-area">
+
+      {% if score_data %}
+      <!-- Report content -->
+      <div class="report-container">
+
+        <!-- Top row: gauge + applicant info -->
+        <div class="report-top-row">
+
+          <!-- Score gauge card -->
+          <div class="glass-card gauge-card">
+            <div class="gauge-wrapper">
+              <canvas id="gaugeCanvas" width="280" height="280"></canvas>
+              <div class="gauge-center">
+                <span class="gauge-score" id="gaugeScore">0</span>
+                <span class="gauge-label">/ 1000</span>
+                <span class="gauge-tag" id="gaugeTag"
+                  style="color: {{ score_data.rec_color }}">
+                  {{ score_data.recommendation }}
+                </span>
+              </div>
+            </div>
+            <div class="gauge-scale">
+              <span class="scale-bad">0</span>
+              <span class="scale-mid">500</span>
+              <span class="scale-good">1000</span>
+            </div>
+            <div class="score-range-labels">
+              <span class="range-label danger">Rechazado<br><small>0–599</small></span>
+              <span class="range-label warning">Revisión<br><small>600–749</small></span>
+              <span class="range-label success">Aprobado<br><small>750–1000</small></span>
+            </div>
+          </div>
+
+          <!-- Applicant info card -->
+          <div class="glass-card applicant-card">
+            <div class="applicant-header">
+              <div class="applicant-big-avatar">
+                {{ score_data.applicant.name[0] if score_data.applicant.name else 'N' }}
+              </div>
+              <div>
+                <h3>{{ score_data.applicant.name }}</h3>
+                <span class="applicant-id">{{ score_data.applicant_id }}</span>
+              </div>
+            </div>
+            <div class="applicant-details">
+              <div class="detail-row">
+                <span class="detail-label"><i class="fas fa-calendar"></i> Edad</span>
+                <span class="detail-value">{{ score_data.applicant.age }} años</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label"><i class="fas fa-money-bill-wave"></i> Ingreso mensual</span>
+                <span class="detail-value">${{ "{:,.0f}".format(score_data.applicant.monthly_income) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label"><i class="fas fa-house"></i> Tipo de inmueble</span>
+                <span class="detail-value">{{ score_data.applicant.property_type | capitalize }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label"><i class="fas fa-tag"></i> Valor del inmueble</span>
+                <span class="detail-value">${{ "{:,.0f}".format(score_data.applicant.property_value) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label"><i class="fas fa-hand-holding-dollar"></i> Monto solicitado</span>
+                <span class="detail-value">${{ "{:,.0f}".format(score_data.applicant.loan_amount) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label"><i class="fas fa-calendar-check"></i> Fecha de análisis</span>
+                <span class="detail-value" id="reportDate"></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Score breakdown -->
+        <div class="glass-card breakdown-card">
+          <div class="card-header">
+            <h3><i class="fas fa-chart-bar"></i> Desglose del Score</h3>
+            <span class="total-badge">Total: {{ score_data.total_score }} / 1000</span>
+          </div>
+          <div class="breakdown-bars">
+            {% for key, item in score_data.breakdown.items() %}
+            <div class="breakdown-item">
+              <div class="breakdown-label">
+                <span>{{ item.label }}</span>
+                <span class="breakdown-score">{{ item.score }} / {{ item.max }}</span>
+              </div>
+              <div class="breakdown-track">
+                <div class="breakdown-fill"
+                  data-pct="{{ (item.score / item.max * 100)|round }}"
+                  style="width: 0%">
+                </div>
+              </div>
+              <span class="breakdown-pct">{{ (item.score / item.max * 100)|round }}%</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Recommendation + actions -->
+        <div class="report-bottom-row">
+
+          <div class="glass-card recommendation-card"
+            style="border-left: 4px solid {{ score_data.rec_color }}">
+            <div class="rec-icon" style="color: {{ score_data.rec_color }}">
+              {% if score_data.recommendation == 'Aprobado' %}
+                <i class="fas fa-circle-check fa-2x"></i>
+              {% elif score_data.recommendation == 'Revisión' %}
+                <i class="fas fa-circle-exclamation fa-2x"></i>
+              {% else %}
+                <i class="fas fa-circle-xmark fa-2x"></i>
+              {% endif %}
+            </div>
+            <div class="rec-body">
+              <h3 style="color: {{ score_data.rec_color }}">
+                Recomendación: {{ score_data.recommendation }}
+              </h3>
+              <p>{{ score_data.rec_text }}</p>
+              <div class="rec-tips">
+                <h4>Factores clave:</h4>
+                <ul>
+                  {% if score_data.breakdown.dti.score < 100 %}
+                  <li><i class="fas fa-arrow-up" style="color:#FF4757"></i> Reducir la relación deuda/ingreso</li>
+                  {% endif %}
+                  {% if score_data.breakdown.history.score < 150 %}
+                  <li><i class="fas fa-arrow-up" style="color:#FFD700"></i> Mejorar historial crediticio</li>
+                  {% endif %}
+                  {% if score_data.breakdown.docs.score < 40 %}
+                  <li><i class="fas fa-arrow-up" style="color:#FFD700"></i> Completar documentación requerida</li>
+                  {% endif %}
+                  {% if score_data.breakdown.dti.score >= 150 and score_data.breakdown.history.score >= 150 %}
+                  <li><i class="fas fa-check" style="color:#00D4AA"></i> Perfil financiero sólido</li>
+                  {% endif %}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card actions-card">
+            <h3><i class="fas fa-gavel"></i> Decisión Final</h3>
+            <p>Selecciona la acción a tomar para esta solicitud:</p>
+            <div class="decision-btns">
+              <button class="btn-decision approve" onclick="setDecision('approve', this)">
+                <i class="fas fa-check-circle"></i>
+                <span>Aprobar</span>
+              </button>
+              <button class="btn-decision review" onclick="setDecision('review', this)">
+                <i class="fas fa-clock"></i>
+                <span>Revisión</span>
+              </button>
+              <button class="btn-decision reject" onclick="setDecision('reject', this)">
+                <i class="fas fa-times-circle"></i>
+                <span>Rechazar</span>
+              </button>
+            </div>
+            <div id="decisionMsg" class="decision-msg hidden"></div>
+            <div class="export-section">
+              <button class="btn-outline" onclick="window.print()">
+                <i class="fas fa-file-pdf"></i> Exportar PDF
+              </button>
+              <a href="/scoring" class="btn-outline">
+                <i class="fas fa-plus"></i> Nueva Solicitud
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {% else %}
+      <!-- No data state -->
+      <div class="empty-state">
+        <div class="empty-icon"><i class="fas fa-chart-bar"></i></div>
+        <h3>No hay reporte disponible</h3>
+        <p>Primero debes completar una solicitud de scoring para ver el reporte.</p>
+        <a href="/scoring" class="btn-primary">
+          <i class="fas fa-plus"></i> Crear nueva solicitud
+        </a>
+      </div>
+      {% endif %}
+
+    </div>
+  </main>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+  // Set today's date
+  document.getElementById('reportDate') && (
+    document.getElementById('reportDate').textContent = new Date().toLocaleDateString('es-MX', {
+      year: 'numeric', month: 'long', day: 'numeric'
+    })
+  );
+
+  {% if score_data %}
+  const TOTAL_SCORE = {{ score_data.total_score }};
+  const REC_COLOR   = "{{ score_data.rec_color }}";
+
+  // ── Gauge (arc drawn on canvas) ──────────────────────────────────────────
+  function drawGauge(score) {
+    const canvas = document.getElementById('gaugeCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2 + 20;
+    const r  = 110;
+    const startAngle = Math.PI * 0.75;
+    const endAngle   = Math.PI * 2.25;
+    const pct = score / 1000;
+    const fillEnd = startAngle + (endAngle - startAngle) * pct;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Track
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 18;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Gradient fill
+    const grad = ctx.createLinearGradient(cx - r, cy, cx + r, cy);
+    grad.addColorStop(0,   '#FF4757');
+    grad.addColorStop(0.5, '#FFD700');
+    grad.addColorStop(1,   '#00D4AA');
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, startAngle, fillEnd);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 18;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Glow
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, startAngle, fillEnd);
+    ctx.strokeStyle = REC_COLOR + '55';
+    ctx.lineWidth = 28;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+
+  // Animate gauge + counter
+  let current = 0;
+  const duration = 1800;
+  const startTime = performance.now();
+
+  function animateGauge(ts) {
+    const elapsed = ts - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    current = Math.round(TOTAL_SCORE * eased);
+    drawGauge(current);
+    document.getElementById('gaugeScore').textContent = current;
+    if (progress < 1) requestAnimationFrame(animateGauge);
+  }
+  requestAnimationFrame(animateGauge);
+
+  // Animate breakdown bars
+  setTimeout(() => {
+    document.querySelectorAll('.breakdown-fill').forEach(bar => {
+      const pct = bar.dataset.pct;
+      let color = '#6C63FF';
+      if (pct >= 75) color = '#00D4AA';
+      else if (pct >= 50) color = '#FFD700';
+      else color = '#FF4757';
+      bar.style.background = color;
+      bar.style.width = pct + '%';
+    });
+  }, 400);
+
+  // Decision handler
+  function setDecision(type, btn) {
+    document.querySelectorAll('.btn-decision').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    const msg = document.getElementById('decisionMsg');
+    const messages = {
+      approve: { text: '✅ Solicitud marcada como APROBADA. Se notificará al solicitante.', color: '#00D4AA' },
+      review:  { text: '🔍 Solicitud enviada a REVISIÓN ADICIONAL. Un analista la revisará.', color: '#FFD700' },
+      reject:  { text: '❌ Solicitud RECHAZADA. Se enviará notificación con motivos.', color: '#FF4757' },
+    };
+    msg.textContent = messages[type].text;
+    msg.style.color = messages[type].color;
+    msg.style.borderColor = messages[type].color;
+    msg.classList.remove('hidden');
+  }
+  {% endif %}
+</script>
+</body>
+</html>

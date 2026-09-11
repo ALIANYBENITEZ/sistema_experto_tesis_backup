@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Cronograma Tesis 2026" company="" webLink="" view-date="2026-02-01" view-index="0" gantt-divider-location="400" resource-divider-location="322" version="3.3.3300" locale="es">
+    <description/>
+    <view zooming-state="default:5" id="gantt-chart">
+        <field id="tpd3" name="Nombre" width="220" order="0"/>
+        <field id="tpd4" name="Fecha de inicio" width="70" order="1"/>
+        <field id="tpd5" name="Fecha de fin" width="70" order="2"/>
+        <field id="tpd6" name="Duracion" width="40" order="3"/>
+    </view>
+    <view id="resource-table">
+        <field id="0" name="Nombre" width="210" order="0"/>
+        <field id="1" name="Rol predeterminado" width="86" order="1"/>
+    </view>
+    <calendars>
+        <day-types>
+            <day-type id="0"/>
+            <day-type id="1"/>
+            <default-week id="1" name="default" sun="0" mon="0" tue="0" wed="0" thu="0" fri="0" sat="0"/>
+            <only-show-weekends value="false"/>
+            <overriden-day-types/>
+            <days/>
+        </day-types>
+    </calendars>
+    <tasks empty-milestones="true">
+        <taskproperties>
+            <taskproperty id="tpd0" name="type" type="default" valuetype="icon"/>
+            <taskproperty id="tpd1" name="priority" type="default" valuetype="icon"/>
+            <taskproperty id="tpd2" name="info" type="default" valuetype="icon"/>
+            <taskproperty id="tpd3" name="name" type="default" valuetype="text"/>
+            <taskproperty id="tpd4" name="begindate" type="default" valuetype="date"/>
+            <taskproperty id="tpd5" name="enddate" type="default" valuetype="date"/>
+            <taskproperty id="tpd6" name="duration" type="default" valuetype="int"/>
+            <taskproperty id="tpd7" name="completion" type="default" valuetype="int"/>
+            <taskproperty id="tpd8" name="coordinator" type="default" valuetype="text"/>
+            <taskproperty id="tpd9" name="predecessorsr" type="default" valuetype="text"/>
+        </taskproperties>
+        <task id="1" name="Seleccion y delimitacion del tema de investigacion" color="#3f8ceb" meeting="false" start="2026-02-02" duration="12" complete="0" expand="true"/>
+        <task id="2" name="Revision bibliografica y recopilacion de informacion inicial" color="#3f8ceb" meeting="false" start="2026-02-14" duration="7" complete="0" expand="true">
+            <depend id="1" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="3" name="Elaboracion del planteamiento del problema" color="#3f8ceb" meeting="false" start="2026-02-21" duration="14" complete="0" expand="true">
+            <depend id="2" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="4" name="Definicion del objetivo general y objetivos especificos" color="#3f8ceb" meeting="false" start="2026-03-07" duration="7" complete="0" expand="true">
+            <depend id="3" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="5" name="Elaboracion de la justificacion de la investigacion" color="#3f8ceb" meeting="false" start="2026-03-14" duration="7" complete="0" expand="true">
+            <depend id="4" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="6" name="Revision y consolidacion del planteamiento, objetivos y justificacion" color="#3f8ceb" meeting="false" start="2026-03-21" duration="21" complete="0" expand="true">
+            <depend id="5" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="7" name="Definicion de las tecnologias y propuesta de solucion" color="#3f8ceb" meeting="false" start="2026-04-11" duration="14" complete="0" expand="true">
+            <depend id="6" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="8" name="Revision y preparacion del anteproyecto" color="#3f8ceb" meeting="false" start="2026-04-25" duration="13" complete="0" expand="true">
+            <depend id="7" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="9" name="Defensa del anteproyecto" color="#e8663d" meeting="true" start="2026-05-08" duration="0" complete="0" expand="true">
+            <depend id="8" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="10" name="Elaboracion del marco teorico" color="#20aa3f" meeting="false" start="2026-05-09" duration="14" complete="0" expand="true">
+            <depend id="9" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="11" name="Elaboracion de la base legal" color="#20aa3f" meeting="false" start="2026-05-23" duration="14" complete="0" expand="true">
+            <depend id="10" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="12" name="Elaboracion del marco metodologico" color="#20aa3f" meeting="false" start="2026-06-06" duration="21" complete="0" expand="true">
+            <depend id="11" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="13" name="Definicion de poblacion, muestra e instrumento de investigacion" color="#20aa3f" meeting="false" start="2026-06-27" duration="14" complete="0" expand="true">
+            <depend id="12" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="14" name="Aplicacion del instrumento y recopilacion de datos" color="#20aa3f" meeting="false" start="2026-07-11" duration="14" complete="0" expand="true">
+            <depend id="13" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="15" name="Analisis e interpretacion de los resultados" color="#20aa3f" meeting="false" start="2026-07-25" duration="7" complete="0" expand="true">
+            <depend id="14" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="16" name="Entrega del marco teorico, marco metodologico, prueba y muestra" color="#f0a030" meeting="true" start="2026-08-05" duration="0" complete="0" expand="true">
+            <depend id="15" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="17" name="Diseno de la arquitectura y modelado del sistema" color="#8e44ad" meeting="false" start="2026-08-06" duration="7" complete="0" expand="true">
+            <depend id="16" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="18" name="Diseno y desarrollo del frontend del sistema" color="#8e44ad" meeting="false" start="2026-08-13" duration="14" complete="0" expand="true">
+            <depend id="17" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="19" name="Desarrollo del backend y conexion con la base de datos" color="#8e44ad" meeting="false" start="2026-08-20" duration="14" complete="0" expand="true">
+            <depend id="17" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="20" name="Implementacion del motor de evaluacion y reglas de scoring" color="#8e44ad" meeting="false" start="2026-08-27" duration="14" complete="0" expand="true">
+            <depend id="19" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="21" name="Implementacion del modelo prepago y parametrizacion de reportes" color="#8e44ad" meeting="false" start="2026-09-03" duration="7" complete="0" expand="true">
+            <depend id="20" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="22" name="Integracion de la pasarela de pago Pago Express" color="#8e44ad" meeting="false" start="2026-09-03" duration="7" complete="0" expand="true">
+            <depend id="19" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="23" name="Integracion y validacion de los modulos del sistema" color="#8e44ad" meeting="false" start="2026-09-10" duration="14" complete="0" expand="true">
+            <depend id="21" type="2" difference="0" hardness="Rubber"/>
+            <depend id="22" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="24" name="Ejecucion de pruebas y correccion de errores" color="#d93636" meeting="false" start="2026-09-17" duration="14" complete="0" expand="true">
+            <depend id="23" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="25" name="Elaboracion de resultados de la implementacion" color="#d93636" meeting="false" start="2026-09-24" duration="7" complete="0" expand="true">
+            <depend id="24" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="26" name="Elaboracion de conclusiones y recomendaciones finales" color="#d93636" meeting="false" start="2026-10-01" duration="7" complete="0" expand="true">
+            <depend id="25" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="27" name="Elaboracion y revision del documento final de tesis" color="#d93636" meeting="false" start="2026-10-08" duration="14" complete="0" expand="true">
+            <depend id="26" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="28" name="Correccion y ajustes del trabajo final" color="#d93636" meeting="false" start="2026-10-22" duration="7" complete="0" expand="true">
+            <depend id="27" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="29" name="Preparacion de la presentacion y defensa" color="#d93636" meeting="false" start="2026-10-29" duration="7" complete="0" expand="true">
+            <depend id="28" type="2" difference="0" hardness="Rubber"/>
+        </task>
+        <task id="30" name="Periodo de defensa del trabajo final de tesis" color="#e8663d" meeting="false" start="2026-11-10" duration="4" complete="0" expand="true">
+            <depend id="29" type="2" difference="0" hardness="Rubber"/>
+        </task>
+    </tasks>
+    <resources/>
+    <allocations/>
+    <vacations/>
+    <previous/>
+    <roles roleset-name="Default"/>
+</project>
