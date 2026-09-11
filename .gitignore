@@ -74,4 +74,9 @@ desktop.ini
 *.log
 logs/
 *.tmp
+
+# ==============================
+#  Backups de base de datos (datos sensibles: NUNCA subir)
+# ==============================
 *.bak
+backups/
