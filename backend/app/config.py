@@ -1,17 +1,59 @@
 import os
+import secrets
 from datetime import timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
 
+# Entorno actual (development / production)
+_ENV = os.getenv("FLASK_ENV", "development").lower()
+_IS_PROD = _ENV == "production"
+
+# Longitud mínima aceptable para las claves secretas
+_MIN_KEY_LEN = 32
+
+
+def _resolver_clave(nombre: str) -> str:
+    """
+    Obtiene una clave secreta desde el entorno aplicando políticas de seguridad:
+      - En producción es obligatoria y debe tener longitud suficiente;
+        si falta o es débil, se detiene el arranque.
+      - En desarrollo, si falta, se genera una temporal (válida solo mientras
+        dure el proceso) para no bloquear el trabajo local.
+    """
+    valor = os.getenv(nombre)
+
+    if _IS_PROD:
+        if not valor:
+            raise RuntimeError(
+                f"La variable de entorno {nombre} es obligatoria en producción. "
+                "Defínala en el archivo .env con un valor aleatorio seguro."
+            )
+        if len(valor) < _MIN_KEY_LEN:
+            raise RuntimeError(
+                f"{nombre} es demasiado corta ({len(valor)} caracteres). "
+                f"Use al menos {_MIN_KEY_LEN} caracteres aleatorios."
+            )
+        return valor
+
+    # Desarrollo: usa el valor del .env o genera uno temporal
+    return valor or secrets.token_urlsafe(48)
+
 
 class Config:
-    SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key")
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-jwt-secret")
+    SECRET_KEY = _resolver_clave("SECRET_KEY")
+    JWT_SECRET_KEY = _resolver_clave("JWT_SECRET_KEY")
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=8)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
 
-    _server = os.getenv("DB_SERVER", "DESKTOP-8242966\SQLEXPRESS")
+    # Cookies/tokens: endurecimiento básico de sesión
+    JWT_COOKIE_SECURE = _IS_PROD          # solo enviar por HTTPS en producción
+    JWT_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SECURE = _IS_PROD
+
+    _server = os.getenv("DB_SERVER", r"DESKTOP-8242966\SQLEXPRESS")
     _db     = os.getenv("DB_NAME",   "inmobiliaria_db")
     _driver = os.getenv("DB_DRIVER", "ODBC Driver 17 for SQL Server")
     _user   = os.getenv("DB_USER",   "")
