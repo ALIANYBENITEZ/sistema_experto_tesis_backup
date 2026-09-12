@@ -131,6 +131,98 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
 
 ---
 
+## Pasarela de pagos Pagopar
+
+El módulo de Facturación puede cobrar los períodos pendientes mediante **Pagopar**
+(Paraguay, guaraníes). Mientras no se carguen las credenciales, el sistema sigue
+usando el **pago de prueba (TEST)** y no cobra dinero real.
+
+### Cómo funciona (flujo)
+
+1. El admin de la empresa entra a **Facturación** y pulsa **Pagar con Pagopar**.
+2. El backend crea el pedido en Pagopar y redirige al **checkout** de Pagopar.
+3. El usuario paga (tarjeta, transferencia, billetera, boca de cobro).
+4. Pagopar **notifica** al backend por un webhook; el pago se marca como
+   `APROBADO`, se actualiza el período y se **desbloquea** la empresa si estaba
+   bloqueada por deuda.
+5. Pagopar redirige de vuelta a la página de Facturación.
+
+### Paso 1 — Cargar credenciales
+
+Obtené `public key` y `private key` en el panel de Pagopar
+(**Integrar con mi sitio web**) y completá en `backend/.env`:
+
+```
+PAGOPAR_PUBLIC_KEY=tu_public_key
+PAGOPAR_PRIVATE_KEY=tu_private_key
+PAGOPAR_BASE_URL=https://api.pagopar.com/api
+PAGOPAR_URL_RETORNO=http://localhost:3000/facturacion
+PAGOPAR_URL_NOTIFICACION=http://localhost:5000/api/facturacion/pagopar/webhook
+```
+
+Reiniciá el backend. El botón **Pagar con Pagopar** aparecerá automáticamente
+(el frontend consulta `GET /api/facturacion/pagopar/estado`).
+
+> Las claves viven solo en `backend/.env`, que está en `.gitignore` y **no** se
+> sube a GitHub.
+
+### Paso 2 — Probar el webhook en local con ngrok
+
+Pagopar necesita una **URL pública** para notificar el pago. `localhost` no le
+sirve. En desarrollo se usa **ngrok** para exponer el backend temporalmente.
+
+1. Instalá ngrok desde https://ngrok.com/download (o `choco install ngrok`).
+2. Con el backend corriendo en el puerto 5000, abrí otra terminal y ejecutá:
+
+   ```powershell
+   ngrok http 5000
+   ```
+
+3. ngrok te dará una URL pública, por ejemplo `https://abcd-1234.ngrok-free.app`.
+4. Poné esa URL en `backend/.env` (y reiniciá el backend):
+
+   ```
+   PAGOPAR_URL_NOTIFICACION=https://abcd-1234.ngrok-free.app/api/facturacion/pagopar/webhook
+   ```
+
+5. Si tu panel de Pagopar pide registrar la URL de notificación, usá esa misma.
+
+> La URL de ngrok cambia cada vez que lo reinicias (en el plan gratuito). Hay que
+> actualizar `PAGOPAR_URL_NOTIFICACION` cada vez.
+
+### Paso 3 — Realizar una transacción de prueba
+
+1. Iniciá sesión como **admin de una empresa** que tenga un período con saldo.
+2. Andá a **Facturación** → **Pagar con Pagopar**.
+3. Completá el pago en el checkout de Pagopar (usá los datos de prueba que
+   Pagopar habilite para tu comercio).
+4. Verificá que:
+   - El pago pasa a `APROBADO` en el historial.
+   - El saldo del período baja y, si queda en 0, el estado es `PAGADO`.
+   - Si la empresa estaba bloqueada por deuda, vuelve a quedar habilitada.
+5. Revisá el módulo **Auditoría**: deben aparecer los eventos
+   `PAGO_PAGOPAR_INICIADO` y `WEBHOOK_PAGOPAR_PAGADO`.
+
+### Notas y solución de problemas
+
+- **El botón "Pagar con Pagopar" no aparece:** faltan las credenciales en `.env`
+  o no reiniciaste el backend.
+- **"La pasarela Pagopar no está configurada":** `PAGOPAR_PUBLIC_KEY` o
+  `PAGOPAR_PRIVATE_KEY` están vacías.
+- **El pago no se marca como aprobado:** el webhook no llegó. Revisá que
+  `PAGOPAR_URL_NOTIFICACION` sea la URL pública (ngrok/producción) y que ngrok
+  siga activo. Podés ver las llamadas entrantes en el panel de ngrok
+  (`http://localhost:4040`).
+- **Los nombres de algunos campos pueden variar** según la versión de tu cuenta
+  Pagopar. Si tras una prueba real el parseo falla, ajustá
+  `backend/app/services/pagopar_service.py` (funciones `iniciar_transaccion`,
+  `consultar_pedido`, `procesar_webhook`).
+- **Endpoints usados:** `POST /api/facturacion/pagos/pagopar/iniciar` (inicia el
+  pago) y `POST /api/facturacion/pagopar/webhook` (recibe la notificación, es
+  público y valida el token SHA1 de Pagopar).
+
+---
+
 ## Respaldo y restauración de la base de datos
 
 Los datos reales (clientes, evaluaciones, usuarios) viven en SQL Server, **no** en el
@@ -188,6 +280,7 @@ cd backend
 V.0.1/
 ├── backend/
 │   ├── app/               ← Código Flask
+│   │   └── services/      ← pagopar_service.py, totp_service.py, etc.
 │   ├── migrations/        ← Scripts SQL (estructura de la BD)
 │   ├── scripts/           ← backup_db.ps1 / restore_db.ps1
 │   ├── venv/              ← Entorno virtual Python (NO subir a Git)

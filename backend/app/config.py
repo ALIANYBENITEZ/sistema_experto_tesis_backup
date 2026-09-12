@@ -79,6 +79,21 @@ class Config:
         "pool_recycle": 3600,
     }
 
+    # ── Pasarela de pagos Pagopar (Paraguay) ──
+    # Las claves se obtienen en el panel de Pagopar: "Integrar con mi sitio web".
+    # Mientras no estén definidas, la integración queda deshabilitada y el
+    # sistema sigue usando el flujo de pago TEST.
+    PAGOPAR_PUBLIC_KEY  = os.getenv("PAGOPAR_PUBLIC_KEY", "")
+    PAGOPAR_PRIVATE_KEY = os.getenv("PAGOPAR_PRIVATE_KEY", "")
+    PAGOPAR_BASE_URL    = os.getenv("PAGOPAR_BASE_URL", "https://api.pagopar.com/api")
+    # URL del frontend a la que Pagopar redirige tras el pago (página de resultado)
+    PAGOPAR_URL_RETORNO = os.getenv("PAGOPAR_URL_RETORNO", "http://localhost:3000/facturacion")
+    # URL pública de tu backend que Pagopar invoca para notificar el pago (webhook)
+    PAGOPAR_URL_NOTIFICACION = os.getenv(
+        "PAGOPAR_URL_NOTIFICACION",
+        "http://localhost:5000/api/facturacion/pagopar/webhook",
+    )
+
 
 class DevelopmentConfig(Config):
     DEBUG = True

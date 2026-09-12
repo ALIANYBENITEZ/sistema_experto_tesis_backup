@@ -12,6 +12,7 @@ from app.models.facturacion import (
 from app.utils.decorators import get_current_user, propietario_required, admin_required
 from app.utils.responses import success, error
 from app.services.auditoria_service import registrar as auditar
+from app.services import pagopar_service
 from . import facturacion_bp
 import uuid
 
@@ -146,25 +147,27 @@ def crear_pago():
     return success(data=pago.to_dict(), message="Pago creado (pendiente de confirmación)", status=201)
 
 
-@facturacion_bp.route("/pagos/<int:pago_id>/test-aprobar", methods=["POST"])
-@jwt_required()
-def test_aprobar_pago(pago_id):
-    """Simular aprobación de pago (modo TEST)."""
-    pago = Pago.query.get_or_404(pago_id)
-    if pago.estado != "PENDIENTE":
-        return error("El pago ya fue procesado", 400)
+def _aplicar_pago_aprobado(pago, usuario=None):
+    """
+    Marca un pago como APROBADO, actualiza el período de facturación y ejecuta
+    el desbloqueo automático de la empresa si estaba bloqueada por deuda.
+
+    Centraliza la lógica compartida entre el flujo TEST y el webhook de Pagopar.
+    Es idempotente: si el pago ya está APROBADO, no vuelve a aplicar el monto.
+    Devuelve el objeto periodo actualizado.
+    """
+    if pago.estado == "APROBADO":
+        return PeriodoFacturacion.query.get(pago.periodo_facturacion_id)
 
     pago.estado = "APROBADO"
     pago.fecha_confirmacion = datetime.now(timezone.utc)
 
-    # Actualizar período
     periodo = PeriodoFacturacion.query.get(pago.periodo_facturacion_id)
     periodo.monto_pagado = int(periodo.monto_pagado or 0) + int(pago.monto)
     periodo.saldo_pendiente = int(periodo.monto_total) - int(periodo.monto_pagado)
     desbloqueo_auto = False
     if periodo.saldo_pendiente <= 0:
         periodo.estado = "PAGADO"
-        # Desbloqueo automático si estaba bloqueada por deuda
         empresa = Empresa.query.get(periodo.empresa_id)
         if empresa and not empresa.consultas_habilitadas and empresa.motivo_bloqueo == "BLOQUEADO_DEUDA":
             empresa.consultas_habilitadas = True
@@ -175,11 +178,23 @@ def test_aprobar_pago(pago_id):
         periodo.estado = "PARCIAL"
 
     db.session.commit()
-    auditar("FACTURACION", "PAGO_APROBADO", usuario=get_current_user(), modulo="Facturacion",
+    auditar("FACTURACION", "PAGO_APROBADO", usuario=usuario, modulo="Facturacion",
             entidad="Pago", registro_id=pago.id, resultado="EXITO",
             info={"empresa_id": pago.empresa_id, "monto": int(pago.monto),
-                  "referencia": pago.referencia_externa, "estado_periodo": periodo.estado,
-                  "desbloqueo_automatico": desbloqueo_auto})
+                  "proveedor": pago.proveedor, "referencia": pago.referencia_externa,
+                  "estado_periodo": periodo.estado, "desbloqueo_automatico": desbloqueo_auto})
+    return periodo
+
+
+@facturacion_bp.route("/pagos/<int:pago_id>/test-aprobar", methods=["POST"])
+@jwt_required()
+def test_aprobar_pago(pago_id):
+    """Simular aprobación de pago (modo TEST)."""
+    pago = Pago.query.get_or_404(pago_id)
+    if pago.estado != "PENDIENTE":
+        return error("El pago ya fue procesado", 400)
+
+    _aplicar_pago_aprobado(pago, usuario=get_current_user())
     return success(data=pago.to_dict(), message="Pago aprobado")
 
 
@@ -209,6 +224,148 @@ def list_pagos():
     else:
         pagos = Pago.query.filter_by(empresa_id=current_user.id_empresa).order_by(Pago.fecha_inicio.desc()).all()
     return success(data=[p.to_dict() for p in pagos])
+
+
+# ══════════════════════════════════════════════════════════════
+#  PAGOS CON PAGOPAR (pasarela real)
+# ══════════════════════════════════════════════════════════════
+
+@facturacion_bp.route("/pagopar/estado", methods=["GET"])
+@jwt_required()
+def pagopar_estado():
+    """Indica al frontend si la pasarela Pagopar está configurada y disponible."""
+    return success(data={"habilitado": pagopar_service.esta_configurado()})
+
+
+@facturacion_bp.route("/pagos/pagopar/iniciar", methods=["POST"])
+@jwt_required()
+def iniciar_pago_pagopar():
+    """
+    Inicia un pago con Pagopar para saldar un período de facturación.
+    Crea el Pago en estado PENDIENTE, solicita el pedido a Pagopar y devuelve
+    la URL del checkout a la que el frontend debe redirigir.
+    """
+    if not pagopar_service.esta_configurado():
+        return error("La pasarela Pagopar no está configurada. Contacte al administrador.", 503)
+
+    current_user = get_current_user()
+    data = request.get_json(silent=True) or {}
+
+    periodo_id = data.get("periodo_facturacion_id")
+    if not periodo_id:
+        return error("periodo_facturacion_id requerido", 400)
+
+    periodo = PeriodoFacturacion.query.get_or_404(periodo_id)
+
+    if not current_user.is_propietario() and periodo.empresa_id != current_user.id_empresa:
+        return error("No tiene permisos", 403)
+
+    monto = int(data.get("monto", periodo.saldo_pendiente))
+    if monto <= 0:
+        return error("El período no tiene saldo pendiente", 400)
+
+    empresa = Empresa.query.get(periodo.empresa_id)
+
+    # Crear el pago en estado PENDIENTE con referencia única
+    referencia = f"PG-{periodo.id}-{uuid.uuid4().hex[:8].upper()}"
+    pago = Pago(
+        empresa_id=periodo.empresa_id,
+        periodo_facturacion_id=periodo.id,
+        monto=monto,
+        proveedor="PAGOPAR",
+        referencia_externa=referencia,
+        estado="PENDIENTE",
+        metodo_pago="pagopar",
+    )
+    db.session.add(pago)
+    db.session.commit()
+
+    comprador = {
+        "ruc": (empresa.ruc if empresa else "") or "",
+        "email": (empresa.email if empresa else "") or (current_user.email or ""),
+        "nombre": (empresa.nombre if empresa else "") or "",
+        "telefono": (empresa.telefono if empresa else "") or "",
+        "direccion": (empresa.direccion if empresa else "") or "",
+    }
+    descripcion = f"Facturacion {periodo.mes:02d}/{periodo.anio} - {comprador['nombre']}".strip()
+
+    try:
+        resultado = pagopar_service.iniciar_transaccion(
+            id_pedido=referencia,
+            monto_total=monto,
+            descripcion=descripcion,
+            comprador=comprador,
+        )
+    except pagopar_service.PagoparError as exc:
+        # Marcar el pago como cancelado para no dejar pendientes huérfanos
+        pago.estado = "CANCELADO"
+        pago.observacion = str(exc)[:255]
+        db.session.commit()
+        auditar("FACTURACION", "PAGO_PAGOPAR_ERROR", usuario=current_user, modulo="Facturacion",
+                entidad="Pago", registro_id=pago.id, resultado="FALLO",
+                info={"error": str(exc)[:255], "referencia": referencia})
+        return error(f"No se pudo iniciar el pago con Pagopar: {exc}", 502)
+
+    # Guardar el hash del pedido de Pagopar como referencia externa definitiva
+    pago.observacion = f"pagopar_hash={resultado['hash_pedido']}"
+    db.session.commit()
+
+    auditar("FACTURACION", "PAGO_PAGOPAR_INICIADO", usuario=current_user, modulo="Facturacion",
+            entidad="Pago", registro_id=pago.id, resultado="EXITO",
+            info={"empresa_id": pago.empresa_id, "monto": monto, "referencia": referencia,
+                  "hash_pedido": resultado["hash_pedido"]})
+
+    return success(data={
+        "pago": pago.to_dict(),
+        "hash_pedido": resultado["hash_pedido"],
+        "url_checkout": resultado["url_checkout"],
+    }, message="Pago iniciado. Redirigiendo a Pagopar.")
+
+
+@facturacion_bp.route("/pagopar/webhook", methods=["POST"])
+def pagopar_webhook():
+    """
+    Webhook público que Pagopar invoca para notificar el resultado del pago.
+    NO lleva JWT (lo llama Pagopar). La autenticidad se valida con el token SHA1.
+    """
+    payload = request.get_json(silent=True) or {}
+
+    try:
+        info = pagopar_service.procesar_webhook(payload)
+    except pagopar_service.PagoparError as exc:
+        auditar("FACTURACION", "WEBHOOK_PAGOPAR_INVALIDO", usuario=None, modulo="Facturacion",
+                entidad="Pago", resultado="FALLO", info={"error": str(exc)[:255]})
+        return error(str(exc), 400)
+
+    # Ubicar el pago por la referencia (id_pedido_comercio) o por el hash guardado
+    pago = None
+    ref = info.get("id_pedido_comercio")
+    if ref:
+        pago = Pago.query.filter_by(referencia_externa=ref).first()
+    if not pago and info.get("hash_pedido"):
+        pago = Pago.query.filter(
+            Pago.observacion == f"pagopar_hash={info['hash_pedido']}"
+        ).first()
+
+    if not pago:
+        auditar("FACTURACION", "WEBHOOK_PAGOPAR_SIN_PAGO", usuario=None, modulo="Facturacion",
+                entidad="Pago", resultado="FALLO",
+                info={"hash_pedido": info.get("hash_pedido"), "ref": ref})
+        return error("Pago no encontrado para la notificación", 404)
+
+    if info["pagado"]:
+        _aplicar_pago_aprobado(pago, usuario=None)
+        auditar("FACTURACION", "WEBHOOK_PAGOPAR_PAGADO", usuario=None, modulo="Facturacion",
+                entidad="Pago", registro_id=pago.id, resultado="EXITO",
+                info={"forma_pago": info.get("forma_pago"), "monto": info.get("monto")})
+    else:
+        # Notificación recibida pero el pedido aún no está pagado: no cambiar estado.
+        auditar("FACTURACION", "WEBHOOK_PAGOPAR_NO_PAGADO", usuario=None, modulo="Facturacion",
+                entidad="Pago", registro_id=pago.id, resultado="EXITO",
+                info={"hash_pedido": info.get("hash_pedido")})
+
+    # Pagopar espera que se le devuelva el hash + token como acuse de recibo
+    return pagopar_service.respuesta_webhook(info["hash_pedido"])
 
 
 # ══════════════════════════════════════════════════════════════

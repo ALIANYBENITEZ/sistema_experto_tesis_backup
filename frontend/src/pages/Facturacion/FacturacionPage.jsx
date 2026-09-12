@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { CreditCard, FileText, AlertTriangle, CheckCircle } from 'lucide-react'
-import { getMiPlan, getMiHistorial, crearPago, testAprobarPago, testRechazarPago, getPagos } from '../../api/facturacionApi'
+import { getMiPlan, getMiHistorial, crearPago, testAprobarPago, testRechazarPago, getPagos, getPagoparEstado, iniciarPagoPagopar } from '../../api/facturacionApi'
 import { useAuth } from '../../context/AuthContext'
 import AdminFacturacionPage from './AdminFacturacionPage'
 import toast from 'react-hot-toast'
@@ -20,6 +20,8 @@ function EmpresaFacturacionView() {
   const [historial, setHistorial] = useState([])
   const [pagos, setPagos] = useState([])
   const [loading, setLoading] = useState(true)
+  const [pagoparHabilitado, setPagoparHabilitado] = useState(false)
+  const [procesandoPagopar, setProcesandoPagopar] = useState(false)
 
   const fetch = async () => {
     setLoading(true)
@@ -33,6 +35,32 @@ function EmpresaFacturacionView() {
   }
 
   useEffect(() => { fetch() }, [])
+
+  // Consultar si la pasarela Pagopar está configurada
+  useEffect(() => {
+    getPagoparEstado()
+      .then(({ data }) => setPagoparHabilitado(!!data.data?.habilitado))
+      .catch(() => setPagoparHabilitado(false))
+  }, [])
+
+  const handlePagarPagopar = async () => {
+    if (!planData?.periodo) { toast.error('No hay período activo'); return }
+    setProcesandoPagopar(true)
+    try {
+      const r = await iniciarPagoPagopar({ periodo_facturacion_id: planData.periodo.id })
+      const url = r.data.data?.url_checkout
+      if (url) {
+        // Redirigir al checkout de Pagopar
+        window.location.href = url
+      } else {
+        toast.error('No se recibió la URL de pago de Pagopar')
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'No se pudo iniciar el pago con Pagopar')
+    } finally {
+      setProcesandoPagopar(false)
+    }
+  }
 
   const handlePagar = async () => {
     if (!planData?.periodo) { toast.error('No hay período activo'); return }
@@ -95,9 +123,21 @@ function EmpresaFacturacionView() {
                 <div><p className="text-gray-500">Estado</p><p className={`font-bold ${periodo.estado === 'PAGADO' ? 'text-green-600' : 'text-yellow-600'}`}>{periodo.estado}</p></div>
               </div>
               {periodo.saldo_pendiente > 0 && (
-                <button onClick={handlePagar} className="btn-primary mt-4">
-                  <CreditCard className="h-4 w-4" /> Realizar pago
-                </button>
+                <div className="flex flex-wrap gap-3 mt-4">
+                  {pagoparHabilitado && (
+                    <button onClick={handlePagarPagopar} disabled={procesandoPagopar} className="btn-primary">
+                      <CreditCard className="h-4 w-4" />
+                      {procesandoPagopar ? 'Redirigiendo...' : 'Pagar con Pagopar'}
+                    </button>
+                  )}
+                  <button
+                    onClick={handlePagar}
+                    className={pagoparHabilitado ? 'btn-secondary' : 'btn-primary'}
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    {pagoparHabilitado ? 'Pago de prueba' : 'Realizar pago'}
+                  </button>
+                </div>
               )}
             </div>
           )}

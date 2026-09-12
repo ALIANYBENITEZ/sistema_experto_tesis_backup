@@ -15,6 +15,10 @@ export const getPagos               = ()              => api.get('/facturacion/p
 export const testAprobarPago        = (id)            => api.post(`/facturacion/pagos/${id}/test-aprobar`)
 export const testRechazarPago       = (id)            => api.post(`/facturacion/pagos/${id}/test-rechazar`)
 
+// Pagopar (pasarela real)
+export const getPagoparEstado       = ()              => api.get('/facturacion/pagopar/estado')
+export const iniciarPagoPagopar     = (data)          => api.post('/facturacion/pagos/pagopar/iniciar', data)
+
 // Admin (propietario)
 export const getFacturacionEmpresas = ()              => api.get('/facturacion/admin/empresas')
 export const asignarPlan            = (empresaId, data) => api.post(`/facturacion/admin/empresas/${empresaId}/asignar-plan`, data)
