@@ -1,3 +1,4 @@
+import re
 from datetime import date
 from flask import request
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -11,6 +12,54 @@ from app.services.auditoria_service import registrar as auditar
 from . import clients_bp
 
 TIPOS_DOC_VALIDOS = ("CI", "RUC", "PAS")
+
+# Edad mínima para registrar un cliente.
+EDAD_MINIMA = 18
+
+# El teléfono solo admite dígitos y símbolos habituales (+, espacio, guion,
+# paréntesis). No se permiten letras.
+_TELEFONO_RE = re.compile(r"^[0-9+\-\s()]+$")
+
+
+def _calcular_edad(fecha_nac: date) -> int:
+    """Edad en años cumplidos a la fecha de hoy."""
+    hoy = date.today()
+    return hoy.year - fecha_nac.year - (
+        (hoy.month, hoy.day) < (fecha_nac.month, fecha_nac.day)
+    )
+
+
+def _validar_fecha_nacimiento(valor: str):
+    """
+    Valida y parsea la fecha de nacimiento.
+    Retorna (fecha, None) si es válida, o (None, mensaje_error) si no.
+    Exige que el cliente sea mayor de edad (>= EDAD_MINIMA).
+    """
+    try:
+        fecha_nac = date.fromisoformat(valor)
+    except ValueError:
+        return None, "fecha_nacimiento inválida. Use YYYY-MM-DD"
+
+    if fecha_nac > date.today():
+        return None, "La fecha de nacimiento no puede ser futura"
+
+    if _calcular_edad(fecha_nac) < EDAD_MINIMA:
+        return None, f"El cliente debe ser mayor de edad (mínimo {EDAD_MINIMA} años)"
+
+    return fecha_nac, None
+
+
+def _validar_telefono(valor: str):
+    """
+    Valida el teléfono: no se permiten letras.
+    Retorna (telefono_limpio, None) si es válido, o (None, mensaje_error) si no.
+    """
+    telefono = (valor or "").strip()
+    if not telefono:
+        return None, None  # el teléfono es opcional
+    if not _TELEFONO_RE.match(telefono):
+        return None, "El teléfono solo puede contener números y los símbolos + - ( ) espacio"
+    return telefono, None
 
 
 @clients_bp.route("/", methods=["GET"])
@@ -92,15 +141,19 @@ def create_client():
     if data["tipo_doc"] not in TIPOS_DOC_VALIDOS:
         return error(f"tipo_doc debe ser: {', '.join(TIPOS_DOC_VALIDOS)}", 400)
 
+    # Validar teléfono (no permite letras)
+    telefono, tel_err = _validar_telefono(data.get("telefono"))
+    if tel_err:
+        return error(tel_err, 400)
+
     # Verificar si el cliente ya existe por num_doc
     existing = Client.query.filter_by(num_doc=data["num_doc"]).first()
 
     fecha_nac = None
     if data.get("fecha_nacimiento"):
-        try:
-            fecha_nac = date.fromisoformat(data["fecha_nacimiento"])
-        except ValueError:
-            return error("fecha_nacimiento inválida. Use YYYY-MM-DD", 400)
+        fecha_nac, fn_err = _validar_fecha_nacimiento(data["fecha_nacimiento"])
+        if fn_err:
+            return error(fn_err, 400)
 
     if existing:
         # El cliente ya existe — vincularlo a la empresa correspondiente
@@ -139,7 +192,7 @@ def create_client():
         nombre           = data["nombre"].strip(),
         apellido         = data.get("apellido", "").strip(),
         email            = data.get("email", "").strip() or None,
-        telefono         = data.get("telefono", "").strip() or None,
+        telefono         = telefono,
         direccion        = data.get("direccion", "").strip() or None,
         fecha_nacimiento = fecha_nac,
         nacionalidad     = data.get("nacionalidad") or None,
@@ -181,15 +234,21 @@ def update_client(client_id):
     _campos_aud = ("nombre", "apellido", "email", "telefono", "direccion", "nacionalidad", "id_ciudad")
     valores_ant = {c: getattr(client, c) for c in _campos_aud}
 
+    # Validar teléfono si se envía (no permite letras)
+    if "telefono" in data:
+        telefono, tel_err = _validar_telefono(data.get("telefono"))
+        if tel_err:
+            return error(tel_err, 400)
+
     for field in ("nombre", "apellido", "email", "telefono", "direccion"):
         if field in data:
-            setattr(client, field, data[field].strip() or None)
+            setattr(client, field, (data[field] or "").strip() or None)
 
     if "fecha_nacimiento" in data and data["fecha_nacimiento"]:
-        try:
-            client.fecha_nacimiento = date.fromisoformat(data["fecha_nacimiento"])
-        except ValueError:
-            return error("fecha_nacimiento inválida. Use YYYY-MM-DD", 400)
+        fecha_nac, fn_err = _validar_fecha_nacimiento(data["fecha_nacimiento"])
+        if fn_err:
+            return error(fn_err, 400)
+        client.fecha_nacimiento = fecha_nac
 
     if "nacionalidad" in data:
         client.nacionalidad = data["nacionalidad"] or None

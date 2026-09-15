@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 
 export default function ClientForm({ client, onSaved, onCancel }) {
   const isEdit = Boolean(client)
+  const hoyISO = new Date().toISOString().split('T')[0]
   const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm({
     defaultValues: client ?? {
       tipo_doc: 'CI',
@@ -132,7 +133,17 @@ export default function ClientForm({ client, onSaved, onCancel }) {
         </div>
         <div>
           <label className="label">Teléfono</label>
-          <input className="input" {...register('telefono')} />
+          <input
+            className={`input ${errors.telefono ? 'border-red-400' : ''}`}
+            inputMode="tel"
+            {...register('telefono', {
+              pattern: {
+                value: /^[0-9+\-\s()]*$/,
+                message: 'El teléfono solo admite números y los símbolos + - ( ) espacio',
+              },
+            })}
+          />
+          {errors.telefono && <p className="text-xs text-red-600 mt-1">{errors.telefono.message}</p>}
         </div>
       </div>
 
@@ -180,7 +191,25 @@ export default function ClientForm({ client, onSaved, onCancel }) {
 
       <div>
         <label className="label">Fecha de nacimiento</label>
-        <input type="date" className="input" {...register('fecha_nacimiento')} />
+        <input
+          type="date"
+          max={hoyISO}
+          className={`input ${errors.fecha_nacimiento ? 'border-red-400' : ''}`}
+          {...register('fecha_nacimiento', {
+            validate: (v) => {
+              if (!v) return true // opcional
+              const nac = new Date(v)
+              if (Number.isNaN(nac.getTime())) return 'Fecha inválida'
+              const hoy = new Date()
+              if (nac > hoy) return 'La fecha de nacimiento no puede ser futura'
+              let edad = hoy.getFullYear() - nac.getFullYear()
+              const m = hoy.getMonth() - nac.getMonth()
+              if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--
+              return edad >= 18 || 'El cliente debe ser mayor de edad (mínimo 18 años)'
+            },
+          })}
+        />
+        {errors.fecha_nacimiento && <p className="text-xs text-red-600 mt-1">{errors.fecha_nacimiento.message}</p>}
       </div>
 
       <div className="flex justify-end gap-3 pt-2">
