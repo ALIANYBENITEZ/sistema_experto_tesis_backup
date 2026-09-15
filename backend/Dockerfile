@@ -1,12 +1,9 @@
 FROM python:3.11-slim
 
-# Instalar dependencias del sistema para pyodbc
-RUN apt-get update && apt-get install -y \
-    curl apt-transport-https gnupg2 unixodbc-dev gcc \
-    && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-    && curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list \
-    && apt-get update \
-    && ACCEPT_EULA=Y apt-get install -y msodbcsql17 \
+# psycopg[binary] no requiere paquetes de sistema adicionales (trae libpq).
+# Se instalan utilidades mínimas de compilación por si alguna dependencia lo necesita.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -18,4 +15,6 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["python", "run.py"]
+# Producción: Gunicorn (no el servidor de desarrollo de Flask).
+# Render inyecta $PORT; si no existe, usa 5000.
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 3 --timeout 120 'app:create_app()'"]

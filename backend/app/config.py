@@ -53,30 +53,36 @@ class Config:
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = _IS_PROD
 
-    _server = os.getenv("DB_SERVER", r"DESKTOP-8242966\SQLEXPRESS")
-    _db     = os.getenv("DB_NAME",   "inmobiliaria_db")
-    _driver = os.getenv("DB_DRIVER", "ODBC Driver 17 for SQL Server")
-    _user   = os.getenv("DB_USER",   "")
-    _password = os.getenv("DB_PASSWORD", "")
+    # ── Conexión PostgreSQL ──────────────────────────────────────────────
+    # Prioridad 1: DATABASE_URL (usada en Render y, opcionalmente, en local).
+    #   Render entrega la URL con el prefijo "postgres://", pero SQLAlchemy 2.x
+    #   con el driver psycopg (v3) requiere "postgresql+psycopg://".
+    # Prioridad 2 (fallback): construir la URL a partir de variables sueltas
+    #   (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD) para desarrollo local.
+    _database_url = os.getenv("DATABASE_URL", "").strip()
 
-    # Autenticación de Windows si no hay usuario definido
-    if _user:
-        _conn = (
-            f"mssql+pyodbc://{_user}:{_password}@{_server}/{_db}"
-            f"?driver={_driver.replace(' ', '+')}"
-        )
+    if _database_url:
+        # Normalizar el esquema al dialecto psycopg 3
+        if _database_url.startswith("postgres://"):
+            _database_url = _database_url.replace("postgres://", "postgresql+psycopg://", 1)
+        elif _database_url.startswith("postgresql://"):
+            _database_url = _database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+        _conn = _database_url
     else:
+        _host = os.getenv("DB_HOST", "localhost")
+        _port = os.getenv("DB_PORT", "5432")
+        _db   = os.getenv("DB_NAME", "inmobiliaria_db")
+        _user = os.getenv("DB_USER", "inmobiliaria")
+        _password = os.getenv("DB_PASSWORD", "")
         _conn = (
-            f"mssql+pyodbc://@{_server}/{_db}"
-            f"?driver={_driver.replace(' ', '+')}"
-            f"&trusted_connection=yes"
+            f"postgresql+psycopg://{_user}:{_password}@{_host}:{_port}/{_db}"
         )
 
     SQLALCHEMY_DATABASE_URI = _conn
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_pre_ping": True,
-        "pool_recycle": 3600,
+        "pool_recycle": 1800,
     }
 
     # ── Pasarela de pagos Pagopar (Paraguay) ──

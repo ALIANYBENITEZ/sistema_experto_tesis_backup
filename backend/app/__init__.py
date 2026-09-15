@@ -12,12 +12,23 @@ def create_app(env: str | None = None) -> Flask:
     # ── Inicializar extensiones ───────────────────────────────────────────────
     db.init_app(app)
     jwt.init_app(app)
-    cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
 
-    # ── Marcar las conexiones de la app con CONTEXT_INFO = 'APP' ──────────────
+    # CORS: en desarrollo se permite cualquier origen (cómodo para trabajar en
+    # local). En producción se restringe a los orígenes de CORS_ORIGINS /
+    # FRONTEND_URL (separados por coma) para no exponer la API a cualquier sitio.
+    if env == "production":
+        origenes_raw = os.getenv("CORS_ORIGINS") or os.getenv("FRONTEND_URL", "")
+        origenes = [o.strip() for o in origenes_raw.split(",") if o.strip()]
+        cors.init_app(app, resources={r"/api/*": {"origins": origenes or "*"}})
+    else:
+        cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
+
+    # ── Marcar las conexiones de la app con app.origen = 'APP' ────────────────
     # Permite que los triggers de auditoría a nivel BD distingan operaciones
     # hechas por la aplicación (ya auditadas por el servicio) de las hechas
-    # directamente sobre la base de datos (SSMS, scripts, etc.).
+    # directamente sobre la base de datos (DBeaver, psql, scripts, etc.).
+    # En PostgreSQL se usa un parámetro de sesión personalizado (GUC) que los
+    # triggers leen con current_setting('app.origen', true).
     from sqlalchemy import event
 
     with app.app_context():
@@ -27,11 +38,10 @@ def create_app(env: str | None = None) -> Flask:
         def _marcar_conexion_app(dbapi_conn, connection_record, connection_proxy):
             try:
                 cursor = dbapi_conn.cursor()
-                # 0x415050... => 'APP' en los primeros bytes de CONTEXT_INFO
-                cursor.execute("SET CONTEXT_INFO 0x415050")
+                cursor.execute("SET app.origen = 'APP'")
                 cursor.close()
             except Exception:
-                # No romper la conexión si el motor no soporta CONTEXT_INFO
+                # No romper la conexión si el motor no soporta el parámetro
                 pass
 
     # ── Registrar blueprints ──────────────────────────────────────────────────
