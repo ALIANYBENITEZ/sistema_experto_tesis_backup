@@ -290,8 +290,6 @@ def iniciar_pago_pagopar():
     }
     descripcion = f"Facturacion {periodo.mes:02d}/{periodo.anio} - {comprador['nombre']}".strip()
 
-    current_app.logger.info("PAGOPAR INICIAR >> comprador=%s monto=%s ref=%s",
-                             comprador, monto, referencia)
     try:
         resultado = pagopar_service.iniciar_transaccion(
             id_pedido=referencia,
@@ -309,9 +307,10 @@ def iniciar_pago_pagopar():
                 info={"error": str(exc)[:255], "referencia": referencia})
         return error(f"No se pudo iniciar el pago con Pagopar: {exc}", 502)
     except Exception as exc:
-        # Cualquier error inesperado: dejar el traceback completo en los logs
-        # de Render para poder diagnosticar (si no, Render solo muestra 502).
-        current_app.logger.error("PAGOPAR INICIAR CRASH: %s\n%s", exc, traceback.format_exc())
+        # Error inesperado: registrar el traceback en los logs y devolver 500
+        # con mensaje (en vez de un 502 opaco difícil de diagnosticar).
+        current_app.logger.error("Error interno al iniciar pago Pagopar: %s\n%s",
+                                 exc, traceback.format_exc())
         try:
             pago.estado = "CANCELADO"
             pago.observacion = f"error interno: {str(exc)[:200]}"

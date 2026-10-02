@@ -47,6 +47,18 @@ def _base_url() -> str:
     return current_app.config.get("PAGOPAR_BASE_URL", "https://api.pagopar.com/api").rstrip("/")
 
 
+def _forma_pago() -> int:
+    """
+    Forma de pago a enviar en el pedido. La API la exige (sin ella rechaza el
+    pedido). 26 es el valor usado en los ejemplos oficiales. Configurable con
+    PAGOPAR_FORMA_PAGO por si cambia.
+    """
+    try:
+        return int(current_app.config.get("PAGOPAR_FORMA_PAGO", 26))
+    except (TypeError, ValueError):
+        return 26
+
+
 def _sha1(texto: str) -> str:
     return hashlib.sha1(texto.encode("utf-8")).hexdigest()
 
@@ -67,12 +79,14 @@ def _token_consulta(hash_pedido: str) -> str:
 
 def _resolver_documento(comprador: dict) -> str:
     """
-    Devuelve el documento del comprador a partir del RUC.
+    Devuelve el documento identificador del comprador.
 
-    Las empresas de este sistema siempre operan con RUC. Se envía el RUC
-    completo tal cual, incluyendo el dígito verificador: "4247903-7".
+    La API de Pagopar solo acepta tipo_documento="CI" y el valor del documento
+    puede llevar guion (ej. "80012345-1"). Usamos el RUC/identificador de la
+    empresa tal cual viene (con su dígito verificador). Si viniera un campo
+    `documento` explícito, tiene prioridad.
     """
-    return (comprador.get("ruc") or "").strip()
+    return (comprador.get("documento") or comprador.get("ruc") or "").strip()
 
 
 def iniciar_transaccion(
@@ -107,7 +121,7 @@ def iniciar_transaccion(
     documento = _resolver_documento(comprador)
     if not documento:
         raise PagoparError(
-            "La empresa no tiene RUC cargado. "
+            "La empresa no tiene documento (RUC/CI) cargado. "
             "Registre el RUC de la empresa antes de pagar."
         )
     if not (comprador.get("nombre") or "").strip():
@@ -117,7 +131,6 @@ def iniciar_transaccion(
 
     payload = {
         "token": _token_iniciar(id_pedido, monto_total),
-        "comercio": _public_key(),
         "public_key": _public_key(),
         "monto_total": int(monto_total),
         "tipo_pedido": "VENTA-COMERCIO",
@@ -141,36 +154,36 @@ def iniciar_transaccion(
         "fecha_maxima_pago": fecha_maxima_pago.strftime("%Y-%m-%d %H:%M:%S"),
         "id_pedido_comercio": id_pedido,
         "descripcion_resumen": descripcion,
+        # forma_pago es OBLIGATORIO para esta versión de la API: sin él, Pagopar
+        # rechaza el pedido con un mensaje engañoso ("El documento debe estar
+        # presente"). Se toma de la config (PAGOPAR_FORMA_PAGO) con 26 por defecto.
+        "forma_pago": _forma_pago(),
+        # El objeto comprador debe tener EXACTAMENTE estos 11 campos y en este
+        # formato (confirmado contra la API de Pagopar):
+        #   - tipo_documento SOLO acepta "CI".
+        #   - documento es el identificador del comprador (admite guion).
+        #   - ruc puede ir vacío si el comprador no tiene identificación fiscal.
+        #   - ciudad y direccion_referencia van como null.
+        #   - coordenadas NO puede ir vacío.
         "comprador": {
-            "ruc": comprador.get("ruc", "") or documento,
+            "ruc": comprador.get("ruc", "") or "",
             "email": comprador.get("email", ""),
-            "ciudad": comprador.get("ciudad") or "1",
+            "ciudad": None,
             "nombre": comprador.get("nombre", ""),
             "telefono": comprador.get("telefono", ""),
-            "direccion": comprador.get("direccion", ""),
+            "direccion": comprador.get("direccion", "") or "",
             "documento": documento,
+            "coordenadas": comprador.get("coordenadas") or "0",
             "razon_social": comprador.get("nombre", ""),
-            # Tipo de documento en duro: las empresas siempre operan con RUC.
-            # Se envían ambos nombres de campo para cubrir las variantes que
-            # valida la API de Pagopar (algunas versiones usan tipo_documento,
-            # otras tipo_documento_identidad).
-            "tipo_documento": "RUC",
-            "tipo_documento_identidad": "RUC",
-            "direccion_referencia": "",
-            "coordenadas": "",
+            "tipo_documento": "CI",
+            "direccion_referencia": None,
         },
     }
 
     url = f"{_base_url()}/comercios/2.0/iniciar-transaccion"
 
-    # ── DEBUG temporal: ver el payload enviado (sin el token) y la respuesta ──
-    import json as _json
-    _payload_log = {k: v for k, v in payload.items() if k != "token"}
-    current_app.logger.info("PAGOPAR >> payload: %s", _json.dumps(_payload_log, ensure_ascii=False))
-
     try:
         resp = requests.post(url, json=payload, timeout=_TIMEOUT)
-        current_app.logger.info("PAGOPAR << status=%s body=%s", resp.status_code, resp.text[:1000])
         resp.raise_for_status()
         data = resp.json()
     except requests.RequestException as exc:
