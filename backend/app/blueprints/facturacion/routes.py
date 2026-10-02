@@ -2,7 +2,8 @@
 API de Facturación — Planes, Consumo, Pagos, Bloqueo.
 """
 from datetime import datetime, timezone
-from flask import request
+import traceback
+from flask import request, current_app
 from flask_jwt_extended import jwt_required
 from app.extensions import db
 from app.models import Empresa
@@ -289,6 +290,8 @@ def iniciar_pago_pagopar():
     }
     descripcion = f"Facturacion {periodo.mes:02d}/{periodo.anio} - {comprador['nombre']}".strip()
 
+    current_app.logger.info("PAGOPAR INICIAR >> comprador=%s monto=%s ref=%s",
+                             comprador, monto, referencia)
     try:
         resultado = pagopar_service.iniciar_transaccion(
             id_pedido=referencia,
@@ -305,6 +308,17 @@ def iniciar_pago_pagopar():
                 entidad="Pago", registro_id=pago.id, resultado="FALLO",
                 info={"error": str(exc)[:255], "referencia": referencia})
         return error(f"No se pudo iniciar el pago con Pagopar: {exc}", 502)
+    except Exception as exc:
+        # Cualquier error inesperado: dejar el traceback completo en los logs
+        # de Render para poder diagnosticar (si no, Render solo muestra 502).
+        current_app.logger.error("PAGOPAR INICIAR CRASH: %s\n%s", exc, traceback.format_exc())
+        try:
+            pago.estado = "CANCELADO"
+            pago.observacion = f"error interno: {str(exc)[:200]}"
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        return error(f"Error interno al iniciar el pago: {exc}", 500)
 
     # Guardar el hash del pedido de Pagopar como referencia externa definitiva
     pago.observacion = f"pagopar_hash={resultado['hash_pedido']}"
