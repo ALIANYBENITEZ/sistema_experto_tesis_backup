@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, User } from 'lucide-react'
 import { getEvaluation } from '../../api/evaluationApi'
 import ResultadoBadge from '../../components/ResultadoBadge'
+import { fmtFechaHora } from '../../utils/fecha'
 import toast from 'react-hot-toast'
 
 export default function EvaluationDetailPage() {
@@ -37,7 +38,7 @@ export default function EvaluationDetailPage() {
         </button>
         <div>
           <h1 className="text-xl font-bold text-gray-900">Evaluación #{ev.id}</h1>
-          <p className="text-sm text-gray-500">{new Date(ev.fecha).toLocaleString('es-PE')}</p>
+          <p className="text-sm text-gray-500">{fmtFechaHora(ev.fecha)}</p>
         </div>
       </div>
 

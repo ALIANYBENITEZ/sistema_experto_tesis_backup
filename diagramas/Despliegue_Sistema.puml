@@ -1,0 +1,59 @@
+@startuml Despliegue_Sistema
+' ============================================================
+' Diagrama de Despliegue - Sistema Experto Web de Scoring
+' Arquitectura fisica: navegador -> Render (Frontend/Backend) -> PostgreSQL
+' ============================================================
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam node {
+  BackgroundColor #F5F7FA
+  BorderColor #2C3E50
+}
+skinparam artifact {
+  BackgroundColor #EAF2F8
+  BorderColor #2C3E50
+}
+skinparam database {
+  BackgroundColor #EAF2F8
+  BorderColor #2C3E50
+}
+skinparam ArrowColor #2C3E50
+
+title Diagrama de Despliegue - Sistema Experto Web de Scoring
+
+node "Dispositivo del Usuario" as PC {
+  artifact "Navegador Web\n(Chrome / Edge)" as BROWSER
+}
+
+cloud "Render (PaaS)" as RENDER {
+  node "Static Site" as NFRONT {
+    artifact "SPA React (build Vite)\ndist/ servido por CDN" as FRONT
+  }
+  node "Web Service" as NBACK {
+    artifact "Backend Flask\n+ Gunicorn (WSGI)" as BACK
+  }
+  node "Managed PostgreSQL" as NDB {
+    database "inmobiliaria_db" as DB
+  }
+}
+
+cloud "Pagopar\n(pasarela de pagos)" as PP
+
+' ── Conexiones ──
+BROWSER --> FRONT : HTTPS\n(carga la SPA)
+BROWSER --> BACK : HTTPS / REST\n(/api, JWT)
+BACK --> DB : psycopg\n(SSL, DATABASE_URL)
+BACK --> PP : HTTPS\n(iniciar pago)
+PP --> BACK : HTTPS\n(webhook de notificacion)
+
+note right of NBACK
+  Arranque en produccion:
+  gunicorn "app:create_app()"
+  Variables: DATABASE_URL,
+  SECRET_KEY, JWT_SECRET_KEY,
+  FRONTEND_URL, CORS_ORIGINS
+end note
+
+@enduml

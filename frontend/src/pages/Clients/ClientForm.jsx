@@ -3,16 +3,27 @@ import { useForm } from 'react-hook-form'
 import { createClient, updateClient, getPaises, getDepartamentos, getCiudades } from '../../api/clientApi'
 import toast from 'react-hot-toast'
 
+// Normaliza una fecha (ISO o Date) a 'YYYY-MM-DD' sin desfase por zona horaria.
+function toDateInput(valor) {
+  if (!valor) return ''
+  // Si ya viene como 'YYYY-MM-DD' (o ISO con hora), tomar solo la parte de fecha
+  // evita el corrimiento de -1 día que produce new Date(...).toISOString().
+  const soloFecha = String(valor).split('T')[0]
+  return /^\d{4}-\d{2}-\d{2}$/.test(soloFecha) ? soloFecha : ''
+}
+
 export default function ClientForm({ client, onSaved, onCancel }) {
   const isEdit = Boolean(client)
   const hoyISO = new Date().toISOString().split('T')[0]
   const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm({
-    defaultValues: client ?? {
-      tipo_doc: 'CI',
-      num_doc: '', nombre: '', apellido: '', email: '',
-      telefono: '', direccion: '', fecha_nacimiento: '',
-      nacionalidad: '', id_ciudad: '',
-    },
+    defaultValues: client
+      ? { ...client, fecha_nacimiento: toDateInput(client.fecha_nacimiento) }
+      : {
+          tipo_doc: 'CI',
+          num_doc: '', nombre: '', apellido: '', email: '',
+          telefono: '', direccion: '', fecha_nacimiento: '',
+          nacionalidad: '', id_ciudad: '',
+        },
   })
 
   const [paises, setPaises] = useState([])
@@ -41,19 +52,32 @@ export default function ClientForm({ client, onSaved, onCancel }) {
     }
   }, [paisId])
 
-  // Si es edición y tiene ciudad, buscar su departamento
+  // Si es edición y tiene ciudad, ubicar a qué departamento pertenece y
+  // precargar la lista de ciudades de ese departamento.
   useEffect(() => {
-    if (isEdit && client?.id_ciudad && departamentos.length > 0) {
-      departamentos.forEach(d => {
-        getCiudades(d.id).then(cr => {
-          const found = cr.data.data.find(c => c.id === client.id_ciudad)
+    if (!isEdit || !client?.id_ciudad || departamentos.length === 0) return
+
+    let cancelado = false
+    const idCiudadCliente = Number(client.id_ciudad)
+
+    ;(async () => {
+      for (const d of departamentos) {
+        if (cancelado) return
+        try {
+          const cr = await getCiudades(d.id)
+          const found = cr.data.data.find(c => Number(c.id) === idCiudadCliente)
           if (found) {
+            if (cancelado) return
             setDeptoId(String(d.id))
             setCiudades(cr.data.data)
+            setValue('id_ciudad', String(idCiudadCliente))
+            return
           }
-        }).catch(() => {})
-      })
-    }
+        } catch { /* ignorar y seguir con el siguiente departamento */ }
+      }
+    })()
+
+    return () => { cancelado = true }
   }, [isEdit, client, departamentos])
 
   // Al cambiar país
@@ -92,8 +116,15 @@ export default function ClientForm({ client, onSaved, onCancel }) {
     }
   }
 
+  // Si el submit no se ejecuta por errores de validación, avisar al usuario
+  // (evita que "Actualizar" parezca no hacer nada).
+  const onInvalid = (errs) => {
+    const primerError = Object.values(errs)[0]
+    toast.error(primerError?.message || 'Revise los datos del formulario')
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="label">Tipo documento</label>

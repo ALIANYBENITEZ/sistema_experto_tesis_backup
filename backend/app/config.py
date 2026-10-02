@@ -92,12 +92,31 @@ class Config:
     PAGOPAR_PUBLIC_KEY  = os.getenv("PAGOPAR_PUBLIC_KEY", "")
     PAGOPAR_PRIVATE_KEY = os.getenv("PAGOPAR_PRIVATE_KEY", "")
     PAGOPAR_BASE_URL    = os.getenv("PAGOPAR_BASE_URL", "https://api.pagopar.com/api")
+
+    # ── URLs de retorno y webhook de Pagopar ──
+    # Objetivo: en Render solo haga falta cargar PUBLIC_KEY y PRIVATE_KEY.
+    # Las dos URLs se derivan automáticamente:
+    #   - La de retorno (redirección) sale de FRONTEND_URL + /facturacion/($hash).
+    #     Pagopar exige el literal ($hash) como marcador del hash del pedido.
+    #   - La de notificación (webhook) sale de la URL pública del backend, que
+    #     Render expone en RENDER_EXTERNAL_URL, o de BACKEND_URL en local.
+    # Igualmente, si se definen explícitamente las variables PAGOPAR_URL_*, esas
+    # tienen prioridad (permite sobrescribir sin tocar código).
+    _frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000").rstrip("/")
+    _backend_url = (
+        os.getenv("RENDER_EXTERNAL_URL")
+        or os.getenv("BACKEND_URL", "http://localhost:5000")
+    ).rstrip("/")
+
     # URL del frontend a la que Pagopar redirige tras el pago (página de resultado)
-    PAGOPAR_URL_RETORNO = os.getenv("PAGOPAR_URL_RETORNO", "http://localhost:3000/facturacion")
+    PAGOPAR_URL_RETORNO = os.getenv(
+        "PAGOPAR_URL_RETORNO",
+        f"{_frontend_url}/facturacion/($hash)",
+    )
     # URL pública de tu backend que Pagopar invoca para notificar el pago (webhook)
     PAGOPAR_URL_NOTIFICACION = os.getenv(
         "PAGOPAR_URL_NOTIFICACION",
-        "http://localhost:5000/api/facturacion/pagopar/webhook",
+        f"{_backend_url}/api/facturacion/pagopar/webhook",
     )
 
 

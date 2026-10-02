@@ -53,6 +53,8 @@ export default function App() {
 
             {/* Solo propietario */}
             <Route path="/facturacion"            element={<FacturacionPage />} />
+            {/* Retorno de Pagopar: la pasarela redirige con el hash del pedido en el path */}
+            <Route path="/facturacion/:hash"      element={<FacturacionPage />} />
             <Route path="/auditoria"              element={<AuditoriaPage />} />
             <Route path="/seguridad"              element={<SecurityPage />} />
             <Route path="/empresas"               element={<EmpresasPage />} />

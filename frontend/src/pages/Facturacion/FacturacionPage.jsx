@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { CreditCard, FileText, AlertTriangle, CheckCircle } from 'lucide-react'
 import { getMiPlan, getMiHistorial, crearPago, testAprobarPago, testRechazarPago, getPagos, getPagoparEstado, iniciarPagoPagopar } from '../../api/facturacionApi'
 import { useAuth } from '../../context/AuthContext'
@@ -16,6 +17,10 @@ export default function FacturacionPage() {
 }
 
 function EmpresaFacturacionView() {
+  // Pagopar redirige a /facturacion/:hash tras el pago. El hash sirve para
+  // avisar al usuario y refrescar; la confirmación real llega por el webhook.
+  const { hash } = useParams()
+  const navigate = useNavigate()
   const [planData, setPlanData] = useState(null)
   const [historial, setHistorial] = useState([])
   const [pagos, setPagos] = useState([])
@@ -35,6 +40,16 @@ function EmpresaFacturacionView() {
   }
 
   useEffect(() => { fetch() }, [])
+
+  // Al volver desde Pagopar con un hash en la URL, avisar y limpiar la ruta.
+  useEffect(() => {
+    if (hash) {
+      toast.success('Volviste de Pagopar. Si el pago fue aprobado, se reflejará en unos instantes.')
+      fetch()
+      navigate('/facturacion', { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hash])
 
   // Consultar si la pasarela Pagopar está configurada
   useEffect(() => {

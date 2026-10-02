@@ -1,0 +1,104 @@
+@startuml Secuencia_Login_2FA
+' ============================================================
+' Diagrama de Secuencia - Inicio de sesion con 2FA (CU-01)
+' Sistema Experto Web de Scoring
+' ============================================================
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequence {
+  ArrowColor #2C3E50
+  LifeLineBorderColor #2C3E50
+  LifeLineBackgroundColor #EAF2F8
+  ParticipantBorderColor #2C3E50
+  ParticipantBackgroundColor #F5F7FA
+  ParticipantFontColor #1A1A1A
+  ActorBorderColor #2C3E50
+  ActorBackgroundColor #F5F7FA
+}
+
+title Diagrama de Secuencia - Inicio de Sesion con Doble Factor (2FA)
+
+actor "Usuario" as U
+participant "SPA React\n(LoginPage)" as SPA
+participant "API Auth\n(auth/routes)" as API
+participant "Servicio TOTP\n(totp_service)" as TOTP
+participant "Servicio Auditoria\n(auditoria_service)" as AUD
+database "PostgreSQL\n(usuarios)" as DB
+participant "Google\nAuthenticator" as GA
+
+U -> SPA : Ingresa email y contrasena
+activate SPA
+SPA -> API : POST /api/auth/login {email, password}
+activate API
+
+API -> DB : SELECT usuario por email
+activate DB
+DB --> API : usuario
+deactivate DB
+
+alt Credenciales invalidas o usuario inactivo
+    API -> AUD : registrar(LOGIN_FALLIDO)
+    API --> SPA : 401 Credenciales incorrectas
+    SPA --> U : Muestra error
+else Credenciales validas
+    API -> AUD : registrar(LOGIN_EXITOSO)
+
+    alt Usuario ya tiene 2FA activado
+        API -> API : Genera partial_token (2fa_pending)
+        API --> SPA : 200 {auth_state: 2fa_required, partial_token}
+        SPA --> U : Solicita codigo de 6 digitos
+
+        U -> GA : Consulta codigo OTP actual
+        GA --> U : Codigo de 6 digitos
+        U -> SPA : Ingresa codigo OTP
+        SPA -> API : POST /api/auth/2fa/verify {codigo}\n(Bearer partial_token)
+        API -> TOTP : validar_otp(secreto, codigo)
+        activate TOTP
+        TOTP --> API : valido / invalido
+        deactivate TOTP
+
+        alt OTP incorrecto
+            API --> SPA : 401 Codigo OTP incorrecto
+            SPA --> U : Muestra error
+        else OTP correcto
+            API -> API : create_access_token + refresh_token\n(auth_state: authenticated)
+            API --> SPA : 200 {access_token, refresh_token, user}
+            SPA --> U : Redirige al Dashboard
+        end
+
+    else Usuario debe configurar 2FA (primera vez)
+        API -> TOTP : generar_secreto()
+        activate TOTP
+        TOTP --> API : secreto
+        API -> DB : UPDATE totp_secret, estado=pendiente
+        API -> TOTP : generar_uri() + generar_qr_base64()
+        TOTP --> API : QR (base64)
+        deactivate TOTP
+        API -> API : Genera partial_token (2fa_setup)
+        API --> SPA : 200 {auth_state: 2fa_setup_required, qr_code, partial_token}
+        SPA --> U : Muestra QR para escanear
+
+        U -> GA : Escanea QR
+        U -> GA : Consulta primer codigo
+        GA --> U : Codigo de 6 digitos
+        U -> SPA : Ingresa codigo
+        SPA -> API : POST /api/auth/2fa/setup {codigo}\n(Bearer partial_token)
+        API -> TOTP : validar_otp(secreto, codigo)
+        TOTP --> API : valido / invalido
+
+        alt OTP correcto
+            API -> DB : UPDATE totp_estado=activado
+            API --> SPA : 200 {access_token, refresh_token, user}
+            SPA --> U : 2FA configurado, redirige al Dashboard
+        else OTP incorrecto
+            API --> SPA : 401 Codigo incorrecto
+            SPA --> U : Muestra error
+        end
+    end
+end
+deactivate API
+deactivate SPA
+
+@enduml

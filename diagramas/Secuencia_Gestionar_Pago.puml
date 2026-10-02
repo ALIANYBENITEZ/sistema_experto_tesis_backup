@@ -1,0 +1,87 @@
+@startuml Secuencia_Gestionar_Pago
+' ============================================================
+' Diagrama de Secuencia - Gestionar Pago de Facturacion (CU-06)
+' Pago de un periodo con pasarela Pagopar y desbloqueo automatico
+' ============================================================
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequence {
+  ArrowColor #2C3E50
+  LifeLineBorderColor #2C3E50
+  LifeLineBackgroundColor #EAF2F8
+  ParticipantBorderColor #2C3E50
+  ParticipantBackgroundColor #F5F7FA
+  ParticipantFontColor #1A1A1A
+  ActorBorderColor #2C3E50
+  ActorBackgroundColor #F5F7FA
+}
+
+title Diagrama de Secuencia - Gestionar Pago de Facturacion (CU-06)
+
+actor "Administrador\nde Empresa" as U
+participant "SPA React\n(FacturacionPage)" as SPA
+participant "API Facturacion\n(facturacion/routes)" as API
+participant "Servicio Pagopar\n(pagopar_service)" as PP
+participant "Pasarela Pagopar\n(externa)" as GW
+participant "Servicio Auditoria\n(auditoria_service)" as AUD
+database "PostgreSQL" as DB
+
+U -> SPA : Selecciona periodo a pagar
+activate SPA
+SPA -> API : POST /api/facturacion/pagos/pagopar/iniciar\n{periodo_facturacion_id, monto}
+activate API
+
+API -> API : Verifica permisos y saldo pendiente
+API -> DB : INSERT pago (estado PENDIENTE)
+activate DB
+DB --> API : pago.id
+deactivate DB
+
+API -> PP : iniciar_transaccion(referencia, monto, comprador)
+activate PP
+PP -> GW : Crear pedido (API Pagopar)
+activate GW
+GW --> PP : hash_pedido + url_checkout
+deactivate GW
+PP --> API : {hash_pedido, url_checkout}
+deactivate PP
+
+API -> DB : UPDATE pago (hash Pagopar)
+API -> AUD : registrar(PAGO_PAGOPAR_INICIADO)
+API --> SPA : 200 {url_checkout}
+deactivate API
+SPA --> U : Redirige al checkout de Pagopar
+
+U -> GW : Realiza el pago en Pagopar
+activate GW
+GW --> U : Confirmacion de pago
+
+== Notificacion asincrona (webhook) ==
+
+GW -> API : POST /api/facturacion/pagopar/webhook {payload}
+deactivate GW
+activate API
+API -> PP : procesar_webhook(payload)
+activate PP
+PP --> API : {pagado, hash_pedido, token valido}
+deactivate PP
+
+alt Token invalido
+    API -> AUD : registrar(WEBHOOK_PAGOPAR_INVALIDO)
+    API --> GW : 400 Error
+else Pago confirmado
+    API -> DB : UPDATE pago = APROBADO,\nactualiza periodo (saldo, estado)
+    activate DB
+    alt Saldo saldado y empresa estaba bloqueada
+        API -> DB : UPDATE empresa\n(consultas_habilitadas = true)
+    end
+    DB --> API : ok
+    deactivate DB
+    API -> AUD : registrar(WEBHOOK_PAGOPAR_PAGADO)
+    API --> GW : Acuse de recibo (hash + token)
+end
+deactivate API
+
+@enduml

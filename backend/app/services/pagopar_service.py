@@ -65,6 +65,16 @@ def _token_consulta(hash_pedido: str) -> str:
     return _sha1(f"{_private_key()}{hash_pedido}")
 
 
+def _resolver_documento(comprador: dict) -> str:
+    """
+    Devuelve el documento del comprador a partir del RUC.
+
+    Las empresas de este sistema siempre operan con RUC. Se envía el RUC
+    completo tal cual, incluyendo el dígito verificador: "4247903-7".
+    """
+    return (comprador.get("ruc") or "").strip()
+
+
 def iniciar_transaccion(
     *,
     id_pedido: str,
@@ -93,6 +103,18 @@ def iniciar_transaccion(
     if fecha_maxima_pago is None:
         fecha_maxima_pago = datetime.now(timezone.utc) + timedelta(hours=48)
 
+    # Pagopar rechaza el pedido si el comprador no tiene documento.
+    documento = _resolver_documento(comprador)
+    if not documento:
+        raise PagoparError(
+            "La empresa no tiene RUC cargado. "
+            "Registre el RUC de la empresa antes de pagar."
+        )
+    if not (comprador.get("nombre") or "").strip():
+        raise PagoparError("El comprador no tiene nombre/razón social.")
+    if not (comprador.get("email") or "").strip():
+        raise PagoparError("El comprador no tiene email.")
+
     payload = {
         "token": _token_iniciar(id_pedido, monto_total),
         "comercio": _public_key(),
@@ -120,23 +142,35 @@ def iniciar_transaccion(
         "id_pedido_comercio": id_pedido,
         "descripcion_resumen": descripcion,
         "comprador": {
-            "ruc": comprador.get("ruc", ""),
+            "ruc": comprador.get("ruc", "") or documento,
             "email": comprador.get("email", ""),
-            "ciudad": comprador.get("ciudad", "1"),
+            "ciudad": comprador.get("ciudad") or "1",
             "nombre": comprador.get("nombre", ""),
             "telefono": comprador.get("telefono", ""),
             "direccion": comprador.get("direccion", ""),
-            "documento": comprador.get("documento", comprador.get("ruc", "")),
+            "documento": documento,
             "razon_social": comprador.get("nombre", ""),
-            "tipo_documento": comprador.get("tipo_documento", "RUC"),
+            # Tipo de documento en duro: las empresas siempre operan con RUC.
+            # Se envían ambos nombres de campo para cubrir las variantes que
+            # valida la API de Pagopar (algunas versiones usan tipo_documento,
+            # otras tipo_documento_identidad).
+            "tipo_documento": "RUC",
+            "tipo_documento_identidad": "RUC",
             "direccion_referencia": "",
             "coordenadas": "",
         },
     }
 
     url = f"{_base_url()}/comercios/2.0/iniciar-transaccion"
+
+    # ── DEBUG temporal: ver el payload enviado (sin el token) y la respuesta ──
+    import json as _json
+    _payload_log = {k: v for k, v in payload.items() if k != "token"}
+    current_app.logger.info("PAGOPAR >> payload: %s", _json.dumps(_payload_log, ensure_ascii=False))
+
     try:
         resp = requests.post(url, json=payload, timeout=_TIMEOUT)
+        current_app.logger.info("PAGOPAR << status=%s body=%s", resp.status_code, resp.text[:1000])
         resp.raise_for_status()
         data = resp.json()
     except requests.RequestException as exc:

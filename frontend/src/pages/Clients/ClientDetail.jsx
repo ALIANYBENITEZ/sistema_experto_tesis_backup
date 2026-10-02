@@ -1,13 +1,7 @@
 import { User, Mail, Phone, MapPin, Calendar, Globe, IdCard, CheckCircle2, XCircle } from 'lucide-react'
+import { fmtFechaSolo, fmtFechaLocal } from '../../utils/fecha'
 
 const TIPO_DOC_LABEL = { CI: 'Cédula de Identidad', RUC: 'RUC', PAS: 'Pasaporte' }
-
-function fmtFecha(iso) {
-  if (!iso) return '—'
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  return d.toLocaleDateString('es-PY', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
 
 function Row({ icon: Icon, label, value }) {
   return (
@@ -61,8 +55,8 @@ export default function ClientDetail({ client }) {
         <Row icon={Globe}    label="Nacionalidad"      value={client.nacionalidad_nombre || client.nacionalidad} />
         <Row icon={MapPin}   label="Ciudad"            value={client.ciudad_nombre} />
         <Row icon={MapPin}   label="Dirección"         value={client.direccion} />
-        <Row icon={Calendar} label="Fecha de nacimiento" value={fmtFecha(client.fecha_nacimiento)} />
-        <Row icon={Calendar} label="Registrado el"     value={fmtFecha(client.creado_en)} />
+        <Row icon={Calendar} label="Fecha de nacimiento" value={fmtFechaSolo(client.fecha_nacimiento)} />
+        <Row icon={Calendar} label="Registrado el"     value={fmtFechaLocal(client.creado_en)} />
       </div>
     </div>
   )

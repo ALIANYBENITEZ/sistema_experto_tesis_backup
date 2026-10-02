@@ -42,14 +42,13 @@ services:
         sync: false                  # p. ej. https://inmobiliaria-frontend.onrender.com
       - key: CORS_ORIGINS
         sync: false                  # normalmente igual a FRONTEND_URL
-      # Pasarela de pagos (opcional; si se dejan vacías, el sistema usa modo TEST)
+      # Pasarela de pagos: SOLO hace falta cargar estos dos tokens en Render.
+      # Las URLs de retorno y webhook se derivan solas en config.py a partir
+      # de FRONTEND_URL y RENDER_EXTERNAL_URL. Si alguna vez necesitás
+      # sobreescribirlas, agregá PAGOPAR_URL_RETORNO / PAGOPAR_URL_NOTIFICACION.
       - key: PAGOPAR_PUBLIC_KEY
         sync: false
       - key: PAGOPAR_PRIVATE_KEY
-        sync: false
-      - key: PAGOPAR_URL_RETORNO
-        sync: false
-      - key: PAGOPAR_URL_NOTIFICACION
         sync: false
 
   # ── Frontend React/Vite (Static Site) ─────────────────────────────────────

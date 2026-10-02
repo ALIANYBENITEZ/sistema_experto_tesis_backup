@@ -1,0 +1,46 @@
+@startuml Secuencia_Consultar_Auditoria
+' ============================================================
+' Diagrama de Secuencia - Consultar Auditoria (CU-08)
+' Consulta de la bitacora de eventos del sistema
+' ============================================================
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequence {
+  ArrowColor #2C3E50
+  LifeLineBorderColor #2C3E50
+  LifeLineBackgroundColor #EAF2F8
+  ParticipantBorderColor #2C3E50
+  ParticipantBackgroundColor #F5F7FA
+  ParticipantFontColor #1A1A1A
+  ActorBorderColor #2C3E50
+  ActorBackgroundColor #F5F7FA
+}
+
+title Diagrama de Secuencia - Consultar Auditoria (CU-08)
+
+actor "Administrador" as U
+participant "SPA React\n(AuditoriaPage)" as SPA
+participant "API Auditoria\n(auditoria/routes)" as API
+database "PostgreSQL" as DB
+
+U -> SPA : Abre la bitacora y aplica filtros\n(tipo evento, fechas, busqueda)
+activate SPA
+SPA -> API : GET /api/auditoria?filtros&page&per_page
+activate API
+
+API -> API : Verifica autorizacion (rol)
+note right of API : El administrador de empresa solo ve\nlos eventos de su propia empresa
+API -> DB : SELECT auditoria (filtros + paginacion)
+activate DB
+DB --> API : items + total
+deactivate DB
+
+API -> API : Enriqulece cada registro\ncon el nombre de la empresa
+API --> SPA : 200 {items, total, page, pages}
+deactivate API
+SPA --> U : Muestra la bitacora paginada
+deactivate SPA
+
+@enduml

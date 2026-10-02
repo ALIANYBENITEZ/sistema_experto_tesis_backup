@@ -1,0 +1,85 @@
+@startuml Componentes_Sistema
+' ============================================================
+' Diagrama de Componentes - Sistema Experto Web de Scoring
+' ============================================================
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam component {
+  BackgroundColor #F5F7FA
+  BorderColor #2C3E50
+  ArrowColor #2C3E50
+}
+skinparam interface {
+  BackgroundColor #EAF2F8
+  BorderColor #2C3E50
+}
+
+title Diagrama de Componentes - Sistema Experto Web de Scoring
+
+package "Frontend (React + Vite)" {
+  [SPA - Interfaz de Usuario] as SPA
+  [Cliente HTTP (Axios)] as AXIOS
+  [Contexto de Autenticacion] as AUTHCTX
+}
+
+package "Backend (Flask REST API)" {
+  [Auth / 2FA] as C_AUTH
+  [Clientes] as C_CLI
+  [Empresas / Usuarios] as C_EMP
+  [Evaluacion por Criterios] as C_EVAL
+  [Scoring - Motor de Reglas] as C_SCO
+  [Core de Scoring\n(engine, evaluador,\nclasificador, lista negra)] as C_CORE
+  [Reportes / PDF] as C_REP
+  [Facturacion] as C_FACT
+  [Auditoria] as C_AUD
+  [Servicios\n(TOTP, Consumo, Pagopar)] as C_SVC
+  [Capa ORM (SQLAlchemy)] as ORM
+}
+
+database "PostgreSQL" as DB
+[Pasarela Pagopar] as PP
+() "API REST /api" as API_IF
+() "SQL / psycopg" as SQL_IF
+
+' ── Frontend ──
+SPA --> AXIOS
+AXIOS --> AUTHCTX
+AXIOS --> API_IF : consume
+
+' ── El backend expone la API ──
+API_IF -- C_AUTH
+API_IF -- C_CLI
+API_IF -- C_EMP
+API_IF -- C_EVAL
+API_IF -- C_SCO
+API_IF -- C_REP
+API_IF -- C_FACT
+API_IF -- C_AUD
+
+' ── Dependencias internas ──
+C_SCO ..> C_CORE : usa
+C_AUTH ..> C_SVC : TOTP
+C_FACT ..> C_SVC : Pagopar / Consumo
+C_EVAL ..> C_AUD
+C_CLI ..> C_AUD
+C_CORE ..> C_AUD
+
+C_AUTH ..> ORM
+C_CLI ..> ORM
+C_EMP ..> ORM
+C_EVAL ..> ORM
+C_SCO ..> ORM
+C_CORE ..> ORM
+C_REP ..> ORM
+C_FACT ..> ORM
+C_AUD ..> ORM
+
+ORM --> SQL_IF
+SQL_IF -- DB
+
+' ── Integracion externa ──
+C_SVC ..> PP : HTTPS (pago real)
+
+@enduml

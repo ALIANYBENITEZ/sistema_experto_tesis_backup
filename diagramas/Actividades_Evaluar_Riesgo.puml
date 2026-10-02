@@ -1,0 +1,67 @@
+@startuml Actividades_Evaluar_Riesgo
+' ============================================================
+' Diagrama de Actividades - Evaluar Riesgo de Cliente
+' Flujo de trabajo del caso de uso central del sistema experto
+' ============================================================
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam activity {
+  BackgroundColor #F5F7FA
+  BorderColor #2C3E50
+  DiamondBackgroundColor #EAF2F8
+  DiamondBorderColor #2C3E50
+  ArrowColor #2C3E50
+}
+
+title Diagrama de Actividades - Evaluar Riesgo de Cliente
+
+start
+:El operador selecciona cliente y modelo;
+:Carga los datos del cliente;
+:Ejecuta la evaluacion;
+
+if (Cliente y modelo validos?) then (no)
+  :Mostrar mensaje de error;
+  stop
+else (si)
+  :Verificar cliente contra lista negra ONU;
+
+  fork
+    :Evaluar reglas IF-THEN\n(cada factor activo);
+    :Acumular puntaje ponderado;
+  fork again
+    :Determinar nivel y peso de cada factor;
+  end fork
+
+  :Calcular score total;
+  :Clasificar riesgo segun umbrales;
+
+  if (Esta en lista de sanciones?) then (si)
+    :Forzar clasificacion = ALTO\n(factor determinante);
+  else (no)
+    if (porcentaje >= 75%?) then (si)
+      :Clasificacion = BAJO;
+    elseif (porcentaje >= 50%?) then (si)
+      :Clasificacion = MEDIO;
+    else (no)
+      :Clasificacion = ALTO;
+    endif
+  endif
+
+  :Generar explicacion global;
+  :Guardar evaluacion y detalles en la base;
+
+  if (Consultas habilitadas?) then (no)
+    :Mostrar aviso de consumo bloqueado;
+    stop
+  else (si)
+    :Registrar consumo del reporte;
+    :Registrar evento en auditoria;
+    :Mostrar resultado y clasificacion de riesgo;
+    stop
+  endif
+endif
+
+@enduml

@@ -1,0 +1,172 @@
+@startuml Clases_Sistema
+' ============================================================
+' Diagrama de Clases - Sistema Experto Web de Scoring
+' Modelo de dominio (entidades principales y relaciones)
+' ============================================================
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam class {
+  BackgroundColor #F5F7FA
+  BorderColor #2C3E50
+  ArrowColor #2C3E50
+  AttributeFontColor #1A1A1A
+}
+skinparam classAttributeIconSize 0
+
+title Diagrama de Clases - Sistema Experto Web de Scoring
+
+class Empresa {
+  - id : int
+  - nombre : String
+  - ruc : String
+  - activo : boolean
+  - consultas_habilitadas : boolean
+  --
+  + to_dict()
+}
+
+class Usuario {
+  - id : int
+  - nombre : String
+  - apellido : String
+  - email : String
+  - password_hash : String
+  - rol : String
+  - id_empresa : int
+  - totp_secret : String
+  - totp_estado : String
+  --
+  + set_password(pwd)
+  + check_password(pwd) : boolean
+  + is_admin() : boolean
+}
+
+class Cliente {
+  - id : int
+  - tipo_doc : String
+  - num_doc : String
+  - nombre : String
+  - apellido : String
+  - telefono : String
+  - fecha_nacimiento : Date
+  - estado : String
+  --
+  + to_dict()
+}
+
+class ClienteEmpresa {
+  - id : int
+  - id_cliente : int
+  - id_empresa : int
+  - estado : String
+}
+
+class HistorialCrediticio {
+  - id : int
+  - cliente_id : int
+  - score_externo : Numeric
+  - cantidad_atrasos : int
+  - deuda_total_sistema : Numeric
+  - historial_pagos : String
+  - en_lista_negra : boolean
+  - nivel_endeudamiento : Numeric
+}
+
+class MotorReglas {
+  - id : int
+  - nombre : String
+  - version : String
+  - activo : boolean
+  --
+  + to_dict()
+}
+
+class Regla {
+  - id : int
+  - motor_id : int
+  - parametro : String
+  - operador : String
+  - valor_referencia : String
+  - peso_puntos : Numeric
+  - es_determinante : boolean
+}
+
+class EvaluacionRiesgo {
+  - id : int
+  - cliente_id : int
+  - motor_id : int
+  - usuario_id : int
+  - score_final : Numeric
+  - score_maximo : Numeric
+  - categoria_riesgo : String
+}
+
+class ResultadoDetalle {
+  - id : int
+  - evaluacion_id : int
+  - regla_id : int
+  - cumplido : boolean
+  - puntos_obtenidos : Numeric
+}
+
+class ListaNegraONU {
+  - id : int
+  - nombre : String
+  - apellido : String
+  - num_identidad : String
+}
+
+class Plan {
+  - id : int
+  - nombre : String
+  - cantidad_reportes_incluidos : int
+  - precio_plan : Numeric
+}
+
+class PeriodoFacturacion {
+  - id : int
+  - empresa_id : int
+  - anio : int
+  - mes : int
+  - reportes_consumidos : int
+  - saldo_pendiente : Numeric
+  - estado : String
+}
+
+class Pago {
+  - id : int
+  - empresa_id : int
+  - periodo_facturacion_id : int
+  - monto : Numeric
+  - proveedor : String
+  - estado : String
+}
+
+class Auditoria {
+  - id : int
+  - usuario_id : int
+  - tipo_evento : String
+  - accion : String
+  - resultado : String
+  - fecha : DateTime
+}
+
+' ── Relaciones ──
+Empresa "1" o-- "0..*" Usuario : emplea >
+Empresa "1" o-- "0..*" ClienteEmpresa
+Cliente "1" o-- "0..*" ClienteEmpresa
+Cliente "1" *-- "0..1" HistorialCrediticio
+Usuario "1" --> "0..*" EvaluacionRiesgo : realiza >
+Cliente "1" --> "0..*" EvaluacionRiesgo : es evaluado en >
+MotorReglas "1" *-- "1..*" Regla
+MotorReglas "1" --> "0..*" EvaluacionRiesgo : aplica >
+EvaluacionRiesgo "1" *-- "1..*" ResultadoDetalle
+Regla "1" --> "0..*" ResultadoDetalle
+EvaluacionRiesgo ..> ListaNegraONU : verifica
+Empresa "1" o-- "0..*" PeriodoFacturacion
+Plan "1" --> "0..*" PeriodoFacturacion
+PeriodoFacturacion "1" o-- "0..*" Pago
+
+@enduml

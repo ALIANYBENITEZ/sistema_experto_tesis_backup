@@ -1,0 +1,59 @@
+@startuml Secuencia_Generar_Reporte_PDF
+' ============================================================
+' Diagrama de Secuencia - Generar Reporte PDF (CU-07)
+' Exportacion del reporte de evaluaciones de riesgo
+' ============================================================
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequence {
+  ArrowColor #2C3E50
+  LifeLineBorderColor #2C3E50
+  LifeLineBackgroundColor #EAF2F8
+  ParticipantBorderColor #2C3E50
+  ParticipantBackgroundColor #F5F7FA
+  ParticipantFontColor #1A1A1A
+  ActorBorderColor #2C3E50
+  ActorBackgroundColor #F5F7FA
+}
+
+title Diagrama de Secuencia - Generar Reporte PDF (CU-07)
+
+actor "Operador" as U
+participant "SPA React\n(ReportsPage)" as SPA
+participant "API Reportes\n(reports/routes)" as API
+participant "Generador PDF\n(reportlab)" as PDF
+database "PostgreSQL" as DB
+
+U -> SPA : Aplica filtros (fecha, clasificacion,\nevaluador) y solicita PDF
+activate SPA
+SPA -> API : GET /api/reports/evaluations/pdf?filtros
+activate API
+
+API -> API : Verifica sesion (JWT) y arma consulta
+note right of API : El propietario ve todas las empresas;\nel operador solo su empresa
+API -> DB : SELECT evaluaciones filtradas
+activate DB
+DB --> API : lista de evaluaciones
+deactivate DB
+
+loop Para cada evaluacion
+    API -> DB : SELECT cliente por id
+    activate DB
+    DB --> API : datos del cliente
+    deactivate DB
+    API -> API : Arma fila (score, clasificacion,\ncolor por categoria)
+end
+
+API -> PDF : build(documento, tabla de evaluaciones)
+activate PDF
+PDF --> API : archivo PDF (buffer)
+deactivate PDF
+
+API --> SPA : 200 archivo PDF (attachment)
+deactivate API
+SPA --> U : Descarga el reporte PDF
+deactivate SPA
+
+@enduml

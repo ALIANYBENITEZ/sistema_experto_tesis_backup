@@ -1,0 +1,105 @@
+@startuml Secuencia_Evaluar_Riesgo
+' ============================================================
+' Diagrama de Secuencia - Evaluar riesgo de cliente (CU-05)
+' Caso de uso central del Sistema Experto Web de Scoring
+' ============================================================
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequence {
+  ArrowColor #2C3E50
+  LifeLineBorderColor #2C3E50
+  LifeLineBackgroundColor #EAF2F8
+  ParticipantBorderColor #2C3E50
+  ParticipantBackgroundColor #F5F7FA
+  ParticipantFontColor #1A1A1A
+  ActorBorderColor #2C3E50
+  ActorBackgroundColor #F5F7FA
+}
+
+title Diagrama de Secuencia - Evaluar Riesgo de Cliente (CU-05)
+
+actor "Operador" as U
+participant "SPA React\n(EvaluarClientePage)" as SPA
+participant "API Core\n(core/routes)" as API
+participant "Motor de Scoring\n(engine)" as ENG
+participant "Verificador\nLista Negra" as LN
+participant "Evaluador\nde Reglas IF-THEN" as EV
+participant "Clasificador\nde Riesgo" as CLAS
+participant "Servicio\nConsumo" as CONS
+participant "Servicio\nAuditoria" as AUD
+database "PostgreSQL" as DB
+
+U -> SPA : Selecciona cliente y modelo,\ncarga datos y ejecuta evaluacion
+activate SPA
+SPA -> API : POST /api/core/evaluar\n{cliente_id, modelo_id, datos}
+activate API
+
+API -> DB : SELECT cliente por id
+activate DB
+DB --> API : cliente
+API -> DB : SELECT modelo activo por id
+DB --> API : modelo
+deactivate DB
+
+alt Cliente o modelo no valido
+    API --> SPA : 404 / 400 Error
+    SPA --> U : Muestra mensaje
+else Datos validos
+    API -> ENG : ejecutar_evaluacion(modelo, datos, tipo_persona, cliente)
+    activate ENG
+
+    ENG -> LN : verificar_lista_negra(nombre, apellido, num_doc)
+    activate LN
+    LN -> DB : Consulta local lista_negra_onu\n(coincidencia parcial)
+    activate DB
+    DB --> LN : coincidencias
+    deactivate DB
+    LN --> ENG : {en_lista: true/false}
+    deactivate LN
+
+    loop Para cada factor activo del modelo
+        ENG -> EV : evaluar_factor(factor, valor)
+        activate EV
+        EV --> ENG : {nivel, peso, regla_aplicada, explicacion}
+        deactivate EV
+        ENG -> ENG : score_total += peso
+    end
+
+    ENG -> CLAS : clasificar_riesgo(score_total, umbrales)
+    activate CLAS
+    CLAS --> ENG : clasificacion (bajo/medio/alto)
+    deactivate CLAS
+
+    alt Cliente en lista de sanciones (factor determinante)
+        ENG -> ENG : clasificacion = "alto" (forzado)
+    end
+
+    ENG -> ENG : generar_explicacion_global()
+    ENG --> API : resultado {score_total, clasificacion,\nexplicacion, detalles, lista_negra}
+    deactivate ENG
+
+    API -> DB : INSERT EvaluacionScoring + Detalles
+    activate DB
+    DB --> API : evaluacion.id
+    deactivate DB
+
+    API -> CONS : registrar_consumo_reporte(empresa, usuario, eval)
+    activate CONS
+    alt Consultas bloqueadas (sin plan / limite)
+        CONS --> API : ConsultasBloqueadasError
+        API --> SPA : 403 Consumo bloqueado
+        SPA --> U : Muestra aviso
+    else Consumo registrado
+        CONS --> API : info_consumo
+        deactivate CONS
+        API -> AUD : registrar(EJECUCION_EVALUACION)
+        API --> SPA : 201 {evaluacion, score, clasificacion,\nimpacto, lista_negra}
+        SPA --> U : Muestra resultado y clasificacion de riesgo
+    end
+end
+deactivate API
+deactivate SPA
+
+@enduml

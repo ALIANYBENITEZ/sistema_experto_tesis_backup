@@ -1,0 +1,818 @@
+%PDF-1.4
+%ÿÿÿÿ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 1365 768] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Length 10537 >>
+stream
+q
+0.99 0.98 0.96 rg
+0 0 1365 768 re f
+Q
+BT
+/F2 27 Tf
+0.06 0.16 0.28 rg
+65 715 Td
+(Business Model Canvas: mapa visual del modelo) Tj
+ET
+BT
+/F1 10.2 Tf
+0.38 0.38 0.38 rg
+65 687 Td
+(El Canvas representa la lógica; no la reemplaza.) Tj
+ET
+q
+0.85 0.65 0.17 RG
+1.4 w
+65 675 m 1320 675 l S
+Q
+q
+0.94 0.9 0.95 rg
+0.5 0.4 0.56 RG
+1.1 w
+27 195 152 460 re B
+Q
+q
+0.94 0.9 0.95 rg
+0.5 0.4 0.56 RG
+1.1 w
+27 626 152 29 re B
+Q
+BT
+/F2 10.7 Tf
+0.06 0.16 0.28 rg
+70.9 634 Td
+(Socios clave) Tj
+ET
+BT
+/F1 9.2 Tf
+0.06 0.16 0.28 rg
+52.4 495.14 Td
+(No se definen alianzas) Tj
+ET
+BT
+/F1 9.2 Tf
+0.06 0.16 0.28 rg
+54.7 484.1 Td
+(comerciales ni socios) Tj
+ET
+BT
+/F1 9.2 Tf
+0.06 0.16 0.28 rg
+73.1 473.06 Td
+(estratégicos.) Tj
+ET
+BT
+/F1 9.2 Tf
+0.06 0.16 0.28 rg
+40.9 450.98 Td
+(Proveedores de tecnología e) Tj
+ET
+BT
+/F1 9.2 Tf
+0.06 0.16 0.28 rg
+45.5 439.94 Td
+(infraestructura \(recursos) Tj
+ET
+BT
+/F1 9.2 Tf
+0.06 0.16 0.28 rg
+50.1 428.9 Td
+(necesarios, no socios\):) Tj
+ET
+BT
+/F1 9.2 Tf
+0.06 0.16 0.28 rg
+45.5 417.86 Td
+(- OnRender: alojamiento e) Tj
+ET
+BT
+/F1 9.2 Tf
+0.06 0.16 0.28 rg
+66.2 406.82 Td
+(infraestructura.) Tj
+ET
+BT
+/F1 9.2 Tf
+0.06 0.16 0.28 rg
+50.1 395.78 Td
+(- GitHub: repositorio y) Tj
+ET
+BT
+/F1 9.2 Tf
+0.06 0.16 0.28 rg
+54.7 384.74 Td
+(control de versiones.) Tj
+ET
+BT
+/F1 9.2 Tf
+0.06 0.16 0.28 rg
+52.4 373.7 Td
+(- Pagopar: pasarela de) Tj
+ET
+BT
+/F1 9.2 Tf
+0.06 0.16 0.28 rg
+89.2 362.66 Td
+(pagos.) Tj
+ET
+BT
+/F1 9.2 Tf
+0.06 0.16 0.28 rg
+59.3 340.58 Td
+(ONU / OFAC: fuentes) Tj
+ET
+BT
+/F1 9.2 Tf
+0.06 0.16 0.28 rg
+40.9 329.54 Td
+(externas de información, no) Tj
+ET
+BT
+/F1 9.2 Tf
+0.06 0.16 0.28 rg
+59.3 318.5 Td
+(socios comerciales.) Tj
+ET
+q
+0.87 0.96 0.95 rg
+0.1 0.65 0.63 RG
+1.1 w
+183 375 225 280 re B
+Q
+q
+0.87 0.96 0.95 rg
+0.1 0.65 0.63 RG
+1.1 w
+183 626 225 29 re B
+Q
+BT
+/F2 10.7 Tf
+0.06 0.16 0.28 rg
+250.03 634 Td
+(Actividades clave) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+195.75 565.1 Td
+(Desarrollo y mantenimiento del sistema web) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+269.38 553.7 Td
+(de scoring.) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+195.75 530.9 Td
+(Configuración y actualización de criterios) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+219.5 519.5 Td
+(y reglas IF-THEN parametrizadas.) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+195.75 496.7 Td
+(Procesamiento de evaluaciones y generación) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+267 485.3 Td
+(de reportes.) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+202.88 462.5 Td
+(Validación funcional y actualización de) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+205.25 451.1 Td
+(reglas según el conocimiento definido.) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+198.13 428.3 Td
+(Soporte y mantenimiento de la plataforma.) Tj
+ET
+q
+0.9 0.94 0.98 rg
+0.23 0.5 0.71 RG
+1.1 w
+183 195 225 180 re B
+Q
+q
+0.9 0.94 0.98 rg
+0.23 0.5 0.71 RG
+1.1 w
+183 346 225 29 re B
+Q
+BT
+/F2 10.7 Tf
+0.06 0.16 0.28 rg
+258.05 354 Td
+(Recursos clave) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+197.85 322.58 Td
+(Plataforma web React/Flask y base de datos) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+269.93 311.42 Td
+(PostgreSQL.) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+200.18 289.1 Td
+(Motor de reglas, criterios y conocimiento) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+267.6 277.94 Td
+(del dominio.) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+195.52 255.62 Td
+(Reglas IF-THEN definidas y validadas dentro) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+265.27 244.46 Td
+(del proyecto.) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+197.85 222.14 Td
+(Infraestructura de alojamiento, seguridad,) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+230.4 210.98 Td
+(respaldos y soporte técnico.) Tj
+ET
+q
+1 0.95 0.78 rg
+0.93 0.74 0.21 RG
+1.1 w
+415 195 215 460 re B
+Q
+q
+1 0.95 0.78 rg
+0.93 0.74 0.21 RG
+1.1 w
+415 626 215 29 re B
+Q
+BT
+/F2 10.7 Tf
+0.06 0.16 0.28 rg
+474.35 634 Td
+(Propuesta de valor) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+441.75 554.9 Td
+(Evaluación automatizada del riesgo) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+498.75 543.5 Td
+(comercial.) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+437 520.7 Td
+(Scoring con variables como ingresos,) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+456 509.3 Td
+(historial de pagos, nivel de) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+451.25 497.9 Td
+(endeudamiento y comportamiento) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+496.38 486.5 Td
+(financiero.) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+441.75 463.7 Td
+(Reglas IF-THEN parametrizadas para) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+434.63 452.3 Td
+(obtener puntaje y clasificación Alto,) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+437 440.9 Td
+(Medio o Bajo; apto/no apto según las) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+505.88 429.5 Td
+(reglas.) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+434.63 406.7 Td
+(Verificación automática contra listas) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+432.25 395.3 Td
+(negras \(ONU/OFAC\): diferenciador clave) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+429.88 383.9 Td
+(que bloquea evaluaciones con alertas de) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+496.38 372.5 Td
+(compliance.) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+448.88 349.7 Td
+(Reportes para apoyar la toma de) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+477.38 338.3 Td
+(decisiones humanas.) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+451.25 315.5 Td
+(Objetivo: reducir el tiempo de) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+441.75 304.1 Td
+(evaluación de 20-40 min a 5-10 min) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+444.13 292.7 Td
+(\(estimación sujeta a validación\).) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+432.25 269.9 Td
+(Mayor objetividad y consistencia en el) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+501.13 258.5 Td
+(análisis.) Tj
+ET
+q
+0.99 0.89 0.88 rg
+0.94 0.43 0.38 RG
+1.1 w
+641 410 189 245 re B
+Q
+q
+0.99 0.89 0.88 rg
+0.94 0.43 0.38 RG
+1.1 w
+641 626 189 29 re B
+Q
+BT
+/F2 10.7 Tf
+0.06 0.16 0.28 rg
+679.33 634 Td
+(Relación con clientes) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+670.4 597.98 Td
+(Soporte técnico y asistencia) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+700.63 586.82 Td
+(durante el uso.) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+672.73 564.5 Td
+(Orientación inicial para la) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+675.05 553.34 Td
+(adopción de la plataforma.) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+656.45 531.02 Td
+(Capacitación básica a los usuarios) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+707.6 519.86 Td
+(autorizados.) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+668.08 497.54 Td
+(Asistencia durante el uso del) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+716.9 486.38 Td
+(sistema.) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+656.45 464.06 Td
+(Mantenimiento y actualizaciones de) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+702.95 452.9 Td
+(la plataforma.) Tj
+ET
+BT
+/F1 9.3 Tf
+0.06 0.16 0.28 rg
+686.67 430.58 Td
+(Comunicación digital.) Tj
+ET
+q
+0.9 0.94 0.98 rg
+0.23 0.5 0.71 RG
+1.1 w
+641 195 189 215 re B
+Q
+q
+0.9 0.94 0.98 rg
+0.23 0.5 0.71 RG
+1.1 w
+641 381 189 29 re B
+Q
+BT
+/F2 10.7 Tf
+0.06 0.16 0.28 rg
+716.77 389 Td
+(Canales) Tj
+ET
+BT
+/F1 9.8 Tf
+0.06 0.16 0.28 rg
+698.75 331.12 Td
+(Plataforma web.) Tj
+ET
+BT
+/F1 9.8 Tf
+0.06 0.16 0.28 rg
+662 307.6 Td
+(Contacto comercial directo con) Tj
+ET
+BT
+/F1 9.8 Tf
+0.06 0.16 0.28 rg
+701.2 295.84 Td
+(inmobiliarias.) Tj
+ET
+BT
+/F1 9.8 Tf
+0.06 0.16 0.28 rg
+674.25 272.32 Td
+(Demostración del sistema.) Tj
+ET
+BT
+/F1 9.8 Tf
+0.06 0.16 0.28 rg
+662 248.8 Td
+(Canales digitales de soporte y) Tj
+ET
+BT
+/F1 9.8 Tf
+0.06 0.16 0.28 rg
+703.65 237.04 Td
+(comunicación.) Tj
+ET
+q
+0.88 0.95 0.94 rg
+0.16 0.65 0.62 RG
+1.1 w
+844 195 179 460 re B
+Q
+q
+0.88 0.95 0.94 rg
+0.16 0.65 0.62 RG
+1.1 w
+844 626 179 29 re B
+Q
+BT
+/F2 10.7 Tf
+0.06 0.16 0.28 rg
+877.33 634 Td
+(Segmentos de clientes) Tj
+ET
+BT
+/F1 9.6 Tf
+0.06 0.16 0.28 rg
+856.7 470.02 Td
+(Cliente y pagador: inmobiliarias) Tj
+ET
+BT
+/F1 9.6 Tf
+0.06 0.16 0.28 rg
+904.7 458.5 Td
+(de Asunción.) Tj
+ET
+BT
+/F1 9.6 Tf
+0.06 0.16 0.28 rg
+871.1 435.46 Td
+(Usuarios: administradores,) Tj
+ET
+BT
+/F1 9.6 Tf
+0.06 0.16 0.28 rg
+866.3 423.94 Td
+(responsables de evaluación y) Tj
+ET
+BT
+/F1 9.6 Tf
+0.06 0.16 0.28 rg
+871.1 412.42 Td
+(otros usuarios autorizados) Tj
+ET
+BT
+/F1 9.6 Tf
+0.06 0.16 0.28 rg
+871.1 400.9 Td
+(dentro de la inmobiliaria.) Tj
+ET
+BT
+/F1 9.6 Tf
+0.06 0.16 0.28 rg
+883.1 377.86 Td
+(Necesidad: agilizar y) Tj
+ET
+BT
+/F1 9.6 Tf
+0.06 0.16 0.28 rg
+868.7 366.34 Td
+(estandarizar el análisis de) Tj
+ET
+BT
+/F1 9.6 Tf
+0.06 0.16 0.28 rg
+859.1 354.82 Td
+(clientes y apoyar decisiones de) Tj
+ET
+BT
+/F1 9.6 Tf
+0.06 0.16 0.28 rg
+916.7 343.3 Td
+(riesgo.) Tj
+ET
+BT
+/F2 24 Tf
+0.13 0.66 0.62 rg
+1030 547 Td
+(Mercado) Tj
+ET
+BT
+/F2 24 Tf
+0.5 0.4 0.56 rg
+1030 490 Td
+(Operación) Tj
+ET
+BT
+/F2 14 Tf
+0.85 0.65 0.17 rg
+1030 430 Td
+(Centro: propuesta de valor) Tj
+ET
+q
+0.11 0.33 0.53 rg
+1030 360 126 30 re f
+Q
+BT
+/F2 10 Tf
+1 1 1 rg
+1078 370 Td
+(Canvas) Tj
+ET
+q
+0.99 0.91 0.89 rg
+0.93 0.44 0.37 RG
+1.1 w
+35 36 487 150 re B
+Q
+q
+0.99 0.91 0.89 rg
+0.93 0.44 0.37 RG
+1.1 w
+35 157 487 29 re B
+Q
+BT
+/F2 11.2 Tf
+0.06 0.16 0.28 rg
+261.7 165 Td
+(Costos) Tj
+ET
+BT
+/F1 7.6 Tf
+0.06 0.16 0.28 rg
+198.7 139.06 Td
+(Infraestructura y alojamiento del sistema.) Tj
+ET
+BT
+/F1 7.6 Tf
+0.06 0.16 0.28 rg
+162.6 120.82 Td
+(Base de datos PostgreSQL administrada y servicios necesarios.) Tj
+ET
+BT
+/F1 7.6 Tf
+0.06 0.16 0.28 rg
+208.2 102.58 Td
+(Dominio y operación de la plataforma.) Tj
+ET
+BT
+/F1 7.6 Tf
+0.06 0.16 0.28 rg
+153.1 84.34 Td
+(Mantenimiento, actualizaciones funcionales y del motor de scoring.) Tj
+ET
+BT
+/F1 7.6 Tf
+0.06 0.16 0.28 rg
+166.4 66.1 Td
+(Seguridad, respaldos, soporte técnico y operación continua.) Tj
+ET
+BT
+/F1 7.6 Tf
+0.06 0.16 0.28 rg
+164.5 47.86 Td
+(Montos exactos: por definir según proveedor y escala de uso.) Tj
+ET
+q
+1 0.95 0.78 rg
+0.93 0.74 0.21 RG
+1.1 w
+566 36 464 150 re B
+Q
+q
+1 0.95 0.78 rg
+0.93 0.74 0.21 RG
+1.1 w
+566 157 464 29 re B
+Q
+BT
+/F2 11.2 Tf
+0.06 0.16 0.28 rg
+730.8 165 Td
+(Ingresos / sostenimiento) Tj
+ET
+BT
+/F1 7.7 Tf
+0.06 0.16 0.28 rg
+744.1 144.24 Td
+(Quién paga: la inmobiliaria.) Tj
+ET
+BT
+/F1 7.7 Tf
+0.06 0.16 0.28 rg
+676.73 125.76 Td
+(Qué paga: paquetes prepago de evaluaciones/reportes de scoring.) Tj
+ET
+BT
+/F1 7.7 Tf
+0.06 0.16 0.28 rg
+734.48 107.28 Td
+(Bronce: 15 reportes - Gs. 150.000) Tj
+ET
+BT
+/F1 7.7 Tf
+0.06 0.16 0.28 rg
+736.4 98.04 Td
+(Plata: 30 reportes - Gs. 270.000) Tj
+ET
+BT
+/F1 7.7 Tf
+0.06 0.16 0.28 rg
+740.25 88.8 Td
+(Oro: 50 reportes - Gs. 400.000) Tj
+ET
+BT
+/F1 7.7 Tf
+0.06 0.16 0.28 rg
+661.33 70.32 Td
+(Si supera su paquete, puede adquirir reportes/evaluaciones adicionales.) Tj
+ET
+BT
+/F1 7.7 Tf
+0.06 0.16 0.28 rg
+601.65 51.84 Td
+(Los ingresos por paquetes y adicionales sostienen infraestructura, mantenimiento, seguridad, soporte y) Tj
+ET
+BT
+/F1 7.7 Tf
+0.06 0.16 0.28 rg
+767.2 42.6 Td
+(actualizaciones.) Tj
+ET
+BT
+/F1 8.4 Tf
+0.47 0.47 0.47 rg
+98 16 Td
+(Modelo de negocio aplicado a tesis tecnológicas) Tj
+ET
+
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000258 00000 n 
+0000000355 00000 n 
+0000000457 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+11047
+%%EOF

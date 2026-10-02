@@ -1,0 +1,82 @@
+@startuml Secuencia_Registrar_Empresa_Usuario
+' ============================================================
+' Diagrama de Secuencia - Registrar Empresa y Usuario (CU-02)
+' Gestion realizada por el Propietario del sistema
+' ============================================================
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequence {
+  ArrowColor #2C3E50
+  LifeLineBorderColor #2C3E50
+  LifeLineBackgroundColor #EAF2F8
+  ParticipantBorderColor #2C3E50
+  ParticipantBackgroundColor #F5F7FA
+  ParticipantFontColor #1A1A1A
+  ActorBorderColor #2C3E50
+  ActorBackgroundColor #F5F7FA
+}
+
+title Diagrama de Secuencia - Registrar Empresa y Usuario (CU-02)
+
+actor "Propietario" as U
+participant "SPA React\n(EmpresaForm)" as SPA
+participant "API Empresas\n(empresas/routes)" as API
+participant "Servicio Auditoria\n(auditoria_service)" as AUD
+database "PostgreSQL" as DB
+
+== Registrar empresa ==
+
+U -> SPA : Completa datos de la empresa\n(nombre, RUC, contacto)
+activate SPA
+SPA -> API : POST /api/empresas {datos empresa}
+activate API
+
+API -> API : Verifica rol Propietario (autorizacion)
+API -> DB : SELECT empresa por RUC
+activate DB
+DB --> API : empresa / null
+deactivate DB
+
+alt RUC ya registrado
+    API --> SPA : 409 Empresa con ese RUC ya existe
+    SPA --> U : Muestra aviso
+else Datos validos
+    API -> DB : INSERT empresa
+    activate DB
+    DB --> API : empresa.id
+    deactivate DB
+    API -> AUD : registrar(REGISTRO_EMPRESA)
+    API --> SPA : 201 Empresa registrada
+    SPA --> U : Muestra confirmacion
+end
+deactivate API
+
+== Crear usuario de la empresa ==
+
+U -> SPA : Completa datos del usuario\n(nombre, email, rol, contrasena)
+SPA -> API : POST /api/empresas/{id}/usuarios {datos usuario}
+activate API
+API -> DB : SELECT usuario por email
+activate DB
+DB --> API : usuario / null
+deactivate DB
+
+alt Email ya registrado o rol invalido
+    API --> SPA : 409 / 400 Error
+    SPA --> U : Muestra mensaje
+else Datos validos
+    API -> API : set_password() (hash scrypt)
+    API -> DB : INSERT usuario (id_empresa)
+    activate DB
+    DB --> API : usuario.id
+    deactivate DB
+    API -> AUD : registrar(CREACION_USUARIO)
+    API --> SPA : 201 Usuario creado
+    SPA --> U : Muestra confirmacion
+end
+deactivate API
+deactivate SPA
+
+@enduml

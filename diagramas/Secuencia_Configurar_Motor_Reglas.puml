@@ -1,0 +1,68 @@
+@startuml Secuencia_Configurar_Motor_Reglas
+' ============================================================
+' Diagrama de Secuencia - Configurar Motor de Reglas (CU-04)
+' Definicion de reglas IF-THEN del sistema experto
+' ============================================================
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequence {
+  ArrowColor #2C3E50
+  LifeLineBorderColor #2C3E50
+  LifeLineBackgroundColor #EAF2F8
+  ParticipantBorderColor #2C3E50
+  ParticipantBackgroundColor #F5F7FA
+  ParticipantFontColor #1A1A1A
+  ActorBorderColor #2C3E50
+  ActorBackgroundColor #F5F7FA
+}
+
+title Diagrama de Secuencia - Configurar Motor de Reglas (CU-04)
+
+actor "Administrador" as U
+participant "SPA React\n(MotorForm / ReglaForm)" as SPA
+participant "API Scoring\n(scoring/routes)" as API
+participant "Servicio Auditoria\n(auditoria_service)" as AUD
+database "PostgreSQL" as DB
+
+== Crear motor de reglas ==
+
+U -> SPA : Define nombre y version del motor
+activate SPA
+SPA -> API : POST /api/scoring/motores {nombre, version}
+activate API
+API -> API : Verifica autorizacion (rol)
+API -> DB : INSERT motor_reglas
+activate DB
+DB --> API : motor.id
+deactivate DB
+API -> AUD : registrar(CREACION_MOTOR)
+API --> SPA : 201 Motor creado
+SPA --> U : Muestra motor creado
+deactivate API
+
+== Agregar reglas al motor ==
+
+loop Para cada regla que define el administrador
+    U -> SPA : Define regla\n(parametro, operador, valor,\npeso, es_determinante)
+    SPA -> API : POST /api/scoring/motores/{id}/reglas {datos regla}
+    activate API
+    API -> API : Valida operador y tipo de valor
+
+    alt Regla invalida
+        API --> SPA : 400 Error de validacion
+        SPA --> U : Muestra mensaje
+    else Regla valida
+        API -> DB : INSERT regla (motor_id)
+        activate DB
+        DB --> API : regla.id
+        deactivate DB
+        API -> AUD : registrar(CREACION_REGLA)
+        API --> SPA : 201 Regla agregada
+        SPA --> U : Actualiza lista de reglas
+    end
+    deactivate API
+end
+
+@enduml

@@ -1,0 +1,81 @@
+@startuml Secuencia_Registrar_Cliente
+' ============================================================
+' Diagrama de Secuencia - Registrar Cliente (CU-03)
+' Sistema Experto Web de Scoring
+' ============================================================
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequence {
+  ArrowColor #2C3E50
+  LifeLineBorderColor #2C3E50
+  LifeLineBackgroundColor #EAF2F8
+  ParticipantBorderColor #2C3E50
+  ParticipantBackgroundColor #F5F7FA
+  ParticipantFontColor #1A1A1A
+  ActorBorderColor #2C3E50
+  ActorBackgroundColor #F5F7FA
+}
+
+title Diagrama de Secuencia - Registrar Cliente (CU-03)
+
+actor "Operador" as U
+participant "SPA React\n(ClientForm)" as SPA
+participant "API Clientes\n(clients/routes)" as API
+participant "Servicio Auditoria\n(auditoria_service)" as AUD
+database "PostgreSQL" as DB
+
+U -> SPA : Completa formulario del cliente\n(documento, nombre, telefono, fecha nac.)
+activate SPA
+
+SPA -> SPA : Valida en el navegador\n(mayoria de edad, telefono sin letras)
+
+alt Datos invalidos en el formulario
+    SPA --> U : Muestra errores de validacion
+else Formulario valido
+    SPA -> API : POST /api/clients {datos del cliente}
+    activate API
+
+    API -> API : Valida campos requeridos y tipo_doc
+    API -> API : Valida telefono (sin letras)
+    API -> API : Valida fecha de nacimiento (mayor de edad)
+
+    alt Validacion del servidor falla
+        API --> SPA : 400 Error de validacion
+        SPA --> U : Muestra mensaje
+    else Datos validos
+        API -> DB : SELECT cliente por num_doc
+        activate DB
+        DB --> API : cliente existente / null
+        deactivate DB
+
+        alt El cliente ya existe
+            API -> DB : Verifica vinculo cliente-empresa
+            activate DB
+            DB --> API : vinculo / null
+            deactivate DB
+            alt Ya vinculado a la empresa
+                API --> SPA : 409 Cliente ya registrado
+                SPA --> U : Muestra aviso
+            else No vinculado
+                API -> DB : INSERT cliente_empresa (vinculo)
+                API -> AUD : registrar(VINCULACION_CLIENTE)
+                API --> SPA : 201 Cliente vinculado
+                SPA --> U : Confirma vinculacion
+            end
+        else Cliente nuevo
+            API -> DB : INSERT cliente + vinculo cliente_empresa
+            activate DB
+            DB --> API : cliente.id
+            deactivate DB
+            API -> AUD : registrar(REGISTRO_CLIENTE)
+            API --> SPA : 201 Cliente registrado
+            SPA --> U : Muestra confirmacion
+        end
+    end
+    deactivate API
+end
+deactivate SPA
+
+@enduml
