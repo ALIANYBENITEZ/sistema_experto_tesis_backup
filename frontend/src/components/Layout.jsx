@@ -5,6 +5,7 @@ import {
   BarChart2, LogOut, Menu, Building2, ShieldCheck, Briefcase, Lock, CreditCard, ScrollText,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import ConfirmLogoutOnBack from './ConfirmLogoutOnBack'
 import toast from 'react-hot-toast'
 
 const NAV_ITEMS = [
@@ -86,6 +87,9 @@ export default function Layout() {
 
   return (
     <div className="flex h-full">
+      {/* Confirmación de cierre de sesión al pulsar el botón "atrás" */}
+      <ConfirmLogoutOnBack />
+
       {/* Sidebar Desktop */}
       <aside className="hidden lg:flex lg:flex-col w-64 bg-primary-900 flex-shrink-0">
         <SidebarContent />
