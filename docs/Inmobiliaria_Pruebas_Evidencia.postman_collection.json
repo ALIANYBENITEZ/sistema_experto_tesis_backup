@@ -1,0 +1,481 @@
+{
+  "info": {
+    "name": "Inmobiliaria - Pruebas de Servicios (Evidencia)",
+    "description": "Colección enfocada para la corrida de evidencia de la tesis. Incluye: (1) pruebas de seguridad del login (credenciales inválidas, campos faltantes, acceso sin token), (2) autenticación válida con 2FA automático (TOTP), y (3) endpoints de los flujos principales que recuperan información y la ejecución del scoring. No incluye PUT/DELETE/PATCH ni endpoints secundarios. Apunta al servicio en OnRender.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Test base aplicado a TODOS los requests (salvo que el request valide su propio código).",
+          "var nombre = (pm.info && pm.info.requestName) ? pm.info.requestName : 'request';",
+          "pm.test('[' + nombre + '] Tiempo de respuesta < 30s', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(30000);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "https://inmobiliaria-backend-u6z7.onrender.com", "type": "string" },
+    { "key": "access_token", "value": "", "type": "string" },
+    { "key": "refresh_token", "value": "", "type": "string" },
+    { "key": "partial_token", "value": "", "type": "string" },
+    { "key": "totp_secret", "value": "", "type": "string" },
+    { "key": "otp_code", "value": "", "type": "string" },
+    { "key": "login_email", "value": "propietario@riskscore.com", "type": "string" },
+    { "key": "login_password", "value": "admin1234@", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [ { "key": "token", "value": "{{access_token}}", "type": "string" } ]
+  },
+  "item": [
+    {
+      "name": "1. Seguridad del Login",
+      "item": [
+        {
+          "name": "Login con contraseña incorrecta (espera 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[Seguridad] Rechaza credenciales incorrectas (401)', function () {",
+                  "    pm.expect(pm.response.code).to.eql(401);",
+                  "});",
+                  "pm.test('[Seguridad] No entrega token con clave inválida', function () {",
+                  "    var json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "    pm.expect(json.success).to.not.eql(true);",
+                  "    pm.expect((json.data||{}).access_token).to.be.undefined;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{login_email}}\",\n  \"password\": \"clave_incorrecta_000\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "Login sin campos (espera 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[Seguridad] Rechaza solicitud sin credenciales (400)', function () {",
+                  "    pm.expect(pm.response.code).to.eql(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "Acceso a endpoint protegido sin token (espera 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[Seguridad] Bloquea acceso sin token (401)', function () {",
+                  "    pm.expect(pm.response.code).to.eql(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/auth/me", "host": ["{{base_url}}"], "path": ["api", "auth", "me"] }
+          }
+        },
+        {
+          "name": "Acceso con token inválido (espera 401/422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[Seguridad] Rechaza token manipulado (401 o 422)', function () {",
+                  "    pm.expect([401, 422]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "token.falso.manipulado" } ] },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/clients/", "host": ["{{base_url}}"], "path": ["api", "clients", ""] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Autenticación válida (login + 2FA)",
+      "item": [
+        {
+          "name": "POST Login (credenciales correctas)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "var d = json.data || {};",
+                  "if (d.partial_token) pm.collectionVariables.set('partial_token', d.partial_token);",
+                  "if (d.access_token) pm.collectionVariables.set('access_token', d.access_token);",
+                  "if (d.refresh_token) pm.collectionVariables.set('refresh_token', d.refresh_token);",
+                  "pm.test('[Login] Autentica y devuelve estado/token', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    pm.expect(json.success).to.eql(true);",
+                  "    pm.expect(d).to.have.property('auth_state');",
+                  "    pm.expect(d.partial_token || d.access_token).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{login_email}}\",\n  \"password\": \"{{login_password}}\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "POST 2FA Verify (OTP automático)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Genera el código TOTP desde {{totp_secret}}.",
+                  "// Si NO hay totp_secret, respeta el OTP que ponga el usuario en la variable otp_code.",
+                  "var secret = (pm.variables.get('totp_secret') || '').replace(/\\s/g, '').toUpperCase();",
+                  "if (!secret) {",
+                  "    var manual = (pm.variables.get('otp_code') || '').trim();",
+                  "    if (manual) { console.log('Usando OTP manual de la variable otp_code:', manual); }",
+                  "    else { console.warn('No hay totp_secret ni otp_code. Cargue uno de los dos.'); }",
+                  "    return;",
+                  "}",
+                  "function base32ToHex(b32) {",
+                  "    var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';",
+                  "    var bits = '';",
+                  "    for (var i = 0; i < b32.length; i++) {",
+                  "        var val = alphabet.indexOf(b32.charAt(i));",
+                  "        if (val < 0) continue;",
+                  "        bits += val.toString(2).padStart(5, '0');",
+                  "    }",
+                  "    var hex = '';",
+                  "    for (var j = 0; j + 8 <= bits.length; j += 8) {",
+                  "        hex += parseInt(bits.substr(j, 8), 2).toString(16).padStart(2, '0');",
+                  "    }",
+                  "    return hex;",
+                  "}",
+                  "function totpAt(counter, keyHex) {",
+                  "    var counterHex = counter.toString(16).padStart(16, '0');",
+                  "    var key = CryptoJS.enc.Hex.parse(keyHex);",
+                  "    var msg = CryptoJS.enc.Hex.parse(counterHex);",
+                  "    var hmacHex = CryptoJS.HmacSHA1(msg, key).toString(CryptoJS.enc.Hex);",
+                  "    var offset = parseInt(hmacHex.substr(hmacHex.length - 1), 16);",
+                  "    var bin = (parseInt(hmacHex.substr(offset * 2, 8), 16) & 0x7fffffff);",
+                  "    return (bin % 1000000).toString().padStart(6, '0');",
+                  "}",
+                  "var keyHex = base32ToHex(secret);",
+                  "var counter = Math.floor(Math.floor(Date.now() / 1000) / 30);",
+                  "var otp = totpAt(counter, keyHex);",
+                  "// Escribe el código en TODOS los alcances para que {{otp_code}} se reemplace sí o sí.",
+                  "pm.variables.set('otp_code', otp);",
+                  "pm.collectionVariables.set('otp_code', otp);",
+                  "if (pm.environment && pm.environment.name) { pm.environment.set('otp_code', otp); }",
+                  "console.log('OTP generado:', otp, '| prev:', totpAt(counter-1, keyHex), '| next:', totpAt(counter+1, keyHex));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = {}; try { json = pm.response.json(); } catch (e) {}",
+                  "var d = json.data || {};",
+                  "if (d.access_token) pm.collectionVariables.set('access_token', d.access_token);",
+                  "if (d.refresh_token) pm.collectionVariables.set('refresh_token', d.refresh_token);",
+                  "if (pm.response.code !== 200) {",
+                  "    console.error('2FA Verify falló (' + pm.response.code + '). Motivo del servidor:', json.message || pm.response.text());",
+                  "    console.error('OTP enviado:', pm.variables.get('otp_code'), '— si no coincide con tu app, revisá el reloj de tu PC o el totp_secret.');",
+                  "}",
+                  "pm.test('[2FA] Autenticación completa con access_token', function () {",
+                  "    pm.expect(pm.response.code, json.message || '').to.eql(200);",
+                  "    pm.expect(json.success).to.eql(true);",
+                  "    pm.expect(d).to.have.property('access_token');",
+                  "    pm.expect(d.auth_state).to.eql('authenticated');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{partial_token}}" } ] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"codigo\": \"{{otp_code}}\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/2fa/verify", "host": ["{{base_url}}"], "path": ["api", "auth", "2fa", "verify"] }
+          }
+        },
+        {
+          "name": "GET Me (usuario autenticado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('[Me] Devuelve datos del usuario autenticado', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    pm.expect(json.success).to.eql(true);",
+                  "    pm.expect(json.data).to.have.property('email');",
+                  "    pm.expect(json.data).to.have.property('rol');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/auth/me", "host": ["{{base_url}}"], "path": ["api", "auth", "me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Flujos principales (lectura)",
+      "item": [
+        {
+          "name": "GET Health check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('[Health] Servicio operativo (status ok)', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    pm.expect(json.status).to.eql('ok');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/health", "host": ["{{base_url}}"], "path": ["api", "health"] }
+          }
+        },
+        {
+          "name": "GET Listar clientes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('[Clientes] Respuesta paginada con items', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    pm.expect(json.success).to.eql(true);",
+                  "    pm.expect(json.data).to.have.property('items');",
+                  "    pm.expect(json.data.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/clients/?page=1&per_page=10", "host": ["{{base_url}}"], "path": ["api", "clients", ""], "query": [ { "key": "page", "value": "1" }, { "key": "per_page", "value": "10" } ] } }
+        },
+        {
+          "name": "GET Listar criterios",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('[Criterios] Lista de criterios con peso', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    pm.expect(json.success).to.eql(true);",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "    if (json.data.length > 0) pm.expect(json.data[0]).to.have.property('peso');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/evaluations/criteria", "host": ["{{base_url}}"], "path": ["api", "evaluations", "criteria"] } }
+        },
+        {
+          "name": "GET Parámetros del scoring",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('[Scoring] Devuelve parámetros disponibles', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/scoring/parametros", "host": ["{{base_url}}"], "path": ["api", "scoring", "parametros"] } }
+        },
+        {
+          "name": "GET Listar motores de reglas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('[Scoring] Lista de motores de reglas', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    pm.expect(json.success).to.eql(true);",
+                  "    pm.expect(json.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/scoring/motores", "host": ["{{base_url}}"], "path": ["api", "scoring", "motores"] } }
+        },
+        {
+          "name": "GET Listar evaluaciones de riesgo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('[Scoring] Lista de evaluaciones de riesgo', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/scoring/evaluaciones", "host": ["{{base_url}}"], "path": ["api", "scoring", "evaluaciones"] } }
+        },
+        {
+          "name": "GET Resumen de reportes (dashboard)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('[Reportes] Resumen de dashboard', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    pm.expect(json.success).to.eql(true);",
+                  "    pm.expect(json.data).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/reports/summary", "host": ["{{base_url}}"], "path": ["api", "reports", "summary"] } }
+        },
+        {
+          "name": "GET Auditoría (bitácora)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('[Auditoría] Devuelve registros de la bitácora', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/auditoria/?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["api", "auditoria", ""], "query": [ { "key": "page", "value": "1" }, { "key": "per_page", "value": "20" } ] } }
+        }
+      ]
+    },
+    {
+      "name": "4. Flujo principal: Scoring",
+      "item": [
+        {
+          "name": "POST Evaluar cliente (ejecutar motor IF-THEN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.test('[Evaluar] Devuelve score y clasificación de riesgo', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    pm.expect(json.success).to.eql(true);",
+                  "    var d = json.data || {};",
+                  "    pm.expect(d).to.have.property('categoria_riesgo');",
+                  "    pm.expect(['bajo','medio','alto','rechazado']).to.include(d.categoria_riesgo);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"cliente_id\": 1,\n  \"motor_id\": 1,\n  \"operacion\": {\n    \"tipo_propiedad\": \"departamento\",\n    \"valor_propiedad\": 350000000,\n    \"monto_solicitado\": 300000000,\n    \"plazo_meses\": 120,\n    \"destino\": \"vivienda\"\n  }\n}" },
+            "url": { "raw": "{{base_url}}/api/scoring/evaluar", "host": ["{{base_url}}"], "path": ["api", "scoring", "evaluar"] }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from flask import request
+from flask import request, current_app
 from flask_jwt_extended import (
     create_access_token, create_refresh_token,
     jwt_required, get_jwt_identity, get_jwt,
@@ -7,8 +7,14 @@ from flask_jwt_extended import (
 from app.extensions import db
 from app.models import User
 from app.utils.responses import success, error
+
+
+def _session_timeout() -> int:
+    """Duración de la sesión en segundos, según la configuración del backend."""
+    return int(current_app.config.get("SESSION_TIMEOUT_SECONDS", 1800))
 from app.services.totp_service import generar_secreto, generar_uri, generar_qr_base64, validar_otp
 from app.services.auditoria_service import registrar as auditar
+from app.services.sesion_service import nuevo_sid, registrar_sesion, cerrar_sesion
 from . import auth_bp
 
 
@@ -139,17 +145,26 @@ def setup_2fa():
     user.totp_fecha_config = datetime.now(timezone.utc)
     db.session.commit()
 
-    # Generar tokens completos
+    # Sesión única: registrar este sid como la sesión activa del usuario
+    # (invalida cualquier sesión previa en otro dispositivo).
+    sid = nuevo_sid()
+    registrar_sesion(user.id, sid)
+
+    # Generar tokens completos (con el sid de sesión incrustado)
     access_token  = create_access_token(
         identity=str(user.id),
-        additional_claims={"auth_state": "authenticated", "2fa": True}
+        additional_claims={"auth_state": "authenticated", "2fa": True, "sid": sid}
     )
-    refresh_token = create_refresh_token(identity=str(user.id))
+    refresh_token = create_refresh_token(
+        identity=str(user.id),
+        additional_claims={"sid": sid}
+    )
 
     return success(data={
         "auth_state": "authenticated",
         "access_token": access_token,
         "refresh_token": refresh_token,
+        "session_timeout": _session_timeout(),
         "user": user.to_dict(),
     }, message="2FA configurado exitosamente")
 
@@ -178,17 +193,26 @@ def verify_2fa():
     if not validar_otp(user.totp_secret, codigo):
         return error("Código OTP incorrecto", 401)
 
-    # Generar tokens completos
+    # Sesión única: registrar este sid como la sesión activa del usuario
+    # (invalida cualquier sesión previa en otro dispositivo).
+    sid = nuevo_sid()
+    registrar_sesion(user.id, sid)
+
+    # Generar tokens completos (con el sid de sesión incrustado)
     access_token  = create_access_token(
         identity=str(user.id),
-        additional_claims={"auth_state": "authenticated", "2fa": True}
+        additional_claims={"auth_state": "authenticated", "2fa": True, "sid": sid}
     )
-    refresh_token = create_refresh_token(identity=str(user.id))
+    refresh_token = create_refresh_token(
+        identity=str(user.id),
+        additional_claims={"sid": sid}
+    )
 
     return success(data={
         "auth_state": "authenticated",
         "access_token": access_token,
         "refresh_token": refresh_token,
+        "session_timeout": _session_timeout(),
         "user": user.to_dict(),
     }, message="Autenticación completa")
 
@@ -325,11 +349,19 @@ def refresh():
     if not user or not user.activo:
         return error("Usuario no válido", 401)
 
+    # Conservar el mismo sid del refresh token para mantener la sesión única.
+    # Si el refresh token corresponde a una sesión ya reemplazada por otro
+    # dispositivo, el token_in_blocklist_loader ya lo habrá rechazado antes.
+    sid = get_jwt().get("sid")
+
     access_token = create_access_token(
         identity=str(user.id),
-        additional_claims={"auth_state": "authenticated", "2fa": True}
+        additional_claims={"auth_state": "authenticated", "2fa": True, "sid": sid}
     )
-    return success(data={"access_token": access_token})
+    return success(data={
+        "access_token": access_token,
+        "session_timeout": _session_timeout(),
+    })
 
 
 @auth_bp.route("/me", methods=["GET"])
@@ -352,6 +384,9 @@ def me():
 def logout():
     from app.utils.decorators import get_current_user
     user = get_current_user()
+    # Cerrar la sesión única activa del usuario (deja de aceptar su token).
+    if user:
+        cerrar_sesion(user.id)
     auditar("AUTENTICACION", "LOGOUT", usuario=user, modulo="Login",
             entidad="Usuario", registro_id=user.id if user else None, resultado="EXITO")
     return success(message="Sesión cerrada correctamente")

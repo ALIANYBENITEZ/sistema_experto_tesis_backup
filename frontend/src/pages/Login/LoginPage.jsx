@@ -85,6 +85,15 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
 
+  // Si el usuario fue expulsado por iniciar sesión en otro dispositivo,
+  // mostrar el aviso al llegar a la pantalla de login.
+  useEffect(() => {
+    if (localStorage.getItem('session_kickout')) {
+      localStorage.removeItem('session_kickout')
+      toast.error('Tu sesión se cerró porque la cuenta inició sesión en otro dispositivo.', { duration: 6000 })
+    }
+  }, [])
+
   // Cargar Google Fonts una sola vez
   useEffect(() => {
     const id = 'ln-google-fonts'

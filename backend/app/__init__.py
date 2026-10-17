@@ -13,6 +13,35 @@ def create_app(env: str | None = None) -> Flask:
     db.init_app(app)
     jwt.init_app(app)
 
+    # ── Sesión única por usuario (single session) ─────────────────────────────
+    # En cada petición con token se verifica que el identificador de sesión
+    # (sid) del JWT coincida con la sesión activa registrada para el usuario.
+    # Si el usuario inició sesión en otro dispositivo, el sid anterior deja de
+    # ser válido y su token se considera revocado (401). No usa base de datos.
+    from app.services.sesion_service import es_sesion_valida
+
+    @jwt.token_in_blocklist_loader
+    def _verificar_sesion_unica(jwt_header, jwt_payload):
+        # Solo aplica a sesiones completas; los tokens parciales de 2FA
+        # (auth_state '2fa_setup'/'2fa_pending') no llevan sid y se permiten
+        # para poder completar el flujo de autenticación.
+        estado = jwt_payload.get("auth_state")
+        if estado in ("2fa_setup", "2fa_pending"):
+            return False
+        sid = jwt_payload.get("sid")
+        user_id = jwt_payload.get("sub")
+        # Si el token no trae sid (emitido antes de activar esta función) o no
+        # coincide con la sesión activa → se trata como revocado.
+        return not es_sesion_valida(user_id, sid)
+
+    @jwt.revoked_token_loader
+    def _sesion_revocada(jwt_header, jwt_payload):
+        return {
+            "success": False,
+            "message": "Tu sesión se cerró porque la cuenta inició sesión en otro dispositivo.",
+            "code": "SESION_DUPLICADA",
+        }, 401
+
     # CORS: en desarrollo se permite cualquier origen (cómodo para trabajar en
     # local). En producción se restringe a los orígenes de CORS_ORIGINS /
     # FRONTEND_URL (separados por coma) para no exponer la API a cualquier sitio.

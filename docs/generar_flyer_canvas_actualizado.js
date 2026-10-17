@@ -158,7 +158,7 @@ block(183, 195, 225, 180, 'Recursos clave',
   COLORS.blue, COLORS.blueLine, { size: 9.3, minSize: 7.4 });
 
 block(415, 195, 215, 460, 'Propuesta de valor',
-  'Evaluación automatizada del riesgo comercial.\n\nScoring con variables como ingresos, historial de pagos, nivel de endeudamiento y comportamiento financiero.\n\nReglas IF-THEN parametrizadas para obtener puntaje y clasificación Alto, Medio o Bajo; apto/no apto según las reglas.\n\nVerificación automática contra listas negras (ONU/OFAC): diferenciador clave que bloquea evaluaciones con alertas de compliance.\n\nReportes para apoyar la toma de decisiones humanas.\n\nObjetivo: reducir el tiempo de evaluación de 20-40 min a 5-10 min (estimación sujeta a validación).\n\nMayor objetividad y consistencia en el análisis.',
+  'Evaluación automatizada del riesgo comercial.\n\nScoring con variables como ingresos, historial de pagos, nivel de endeudamiento y comportamiento financiero.\n\nSistema experto de reglas IF-THEN parametrizadas y ponderaciones para obtener puntaje y clasificación Alto, Medio o Bajo; no es un modelo estadístico predictivo.\n\nCotejo contra listas de sanciones (ONU/OFAC): una coincidencia fuerza la clasificación de riesgo alto.\n\nReportes para apoyar la toma de decisiones humanas.\n\nObjetivo: reducir el tiempo de evaluación respecto del proceso manual (sujeto a validación).\n\nMayor objetividad y consistencia en el análisis.',
   COLORS.yellow, COLORS.yellowLine, { size: 9.5, minSize: 7.2 });
 
 block(641, 410, 189, 245, 'Relación con clientes',
@@ -182,11 +182,11 @@ text(1093, 370, 'Canvas', 10, 'F2', COLORS.white, 'center');
 
 // Banda inferior de costos e ingresos/sostenimiento.
 block(35, 36, 487, 150, 'Costos',
-  'Infraestructura y alojamiento del sistema.\n\nBase de datos PostgreSQL administrada y servicios necesarios.\n\nDominio y operación de la plataforma.\n\nMantenimiento, actualizaciones funcionales y del motor de scoring.\n\nSeguridad, respaldos, soporte técnico y operación continua.\n\nMontos exactos: por definir según proveedor y escala de uso.',
-  COLORS.red, COLORS.redLine, { size: 9.3, minSize: 7.6, titleSize: 11.2 });
+  'Inversion inicial (unica): desarrollo del sistema ~Gs. 9.532.200 (RRHH 500 h, hardware y licencias). Costo ya ejecutado en el proyecto.\n\nCostos recurrentes (operacion mensual):\n- Hosting backend (Render Starter): Gs. 51.100\n- Base de datos PostgreSQL (Render): Gs. 51.100\n- Frontend (Render Static, Free): Gs. 0\n- Dominio (prorrateado): ~Gs. 7.300\n- Mantenimiento y actualizaciones del motor de scoring: ~Gs. 40.000\n- Soporte tecnico, seguridad y respaldos: ~Gs. 30.000\nSubtotal fijo: ~Gs. 179.600/mes (~Gs. 2.154.000/ano).\n\nCosto variable: comision de la pasarela (Pagopar) por transaccion, proporcional a las ventas.',
+  COLORS.red, COLORS.redLine, { size: 8.4, minSize: 6.8, titleSize: 11.2 });
 
 block(566, 36, 464, 150, 'Ingresos / sostenimiento',
-  'Quién paga: la inmobiliaria.\n\nQué paga: paquetes prepago de evaluaciones/reportes de scoring.\n\nBronce: 15 reportes - Gs. 150.000\nPlata: 30 reportes - Gs. 270.000\nOro: 50 reportes - Gs. 400.000\n\nSi supera su paquete, puede adquirir reportes/evaluaciones adicionales.\n\nLos ingresos por paquetes y adicionales sostienen infraestructura, mantenimiento, seguridad, soporte y actualizaciones.',
+  'Quién paga: la inmobiliaria.\n\nQué paga: suscripción mensual por planes con facturación por período (reportes/evaluaciones incluidos).\n\nBronce: 15 reportes - Gs. 150.000\nPlata: 30 reportes - Gs. 270.000\nOro: 50 reportes - Gs. 400.000\n\nLos reportes que superan el cupo del período se facturan como evaluaciones adicionales (excedentes).\n\nLos ingresos por suscripción y excedentes sostienen infraestructura, mantenimiento, seguridad, soporte y actualizaciones.',
   COLORS.yellow, COLORS.yellowLine, { size: 9.6, minSize: 7.7, titleSize: 11.2 });
 
 text(98, 16, 'Modelo de negocio aplicado a tesis tecnológicas', 8.4, 'F1', '#777777', 'left');

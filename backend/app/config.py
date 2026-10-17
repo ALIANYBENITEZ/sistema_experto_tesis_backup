@@ -40,11 +40,33 @@ def _resolver_clave(nombre: str) -> str:
     return valor or secrets.token_urlsafe(48)
 
 
+def _resolver_timeout_sesion() -> int:
+    """
+    Duración de la sesión del usuario en SEGUNDOS, tomada de
+    SESSION_TIMEOUT_SECONDS. Si falta o es inválida, usa 1800 s (30 min).
+    Este único valor controla cuánto dura la sesión: cuando expira, el usuario
+    debe volver a iniciar sesión.
+    """
+    valor = os.getenv("SESSION_TIMEOUT_SECONDS", "1800").strip()
+    try:
+        segundos = int(valor)
+    except (TypeError, ValueError):
+        segundos = 1800
+    # Piso de seguridad: al menos 30 s para no dejar la sesión inutilizable.
+    return segundos if segundos >= 30 else 1800
+
+
 class Config:
     SECRET_KEY = _resolver_clave("SECRET_KEY")
     JWT_SECRET_KEY = _resolver_clave("JWT_SECRET_KEY")
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=8)
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+
+    # ── Tiempo de sesión configurable (en segundos) ──
+    # Una sola variable (SESSION_TIMEOUT_SECONDS) define la duración de la sesión.
+    # Se aplica tanto al access token como al refresh token, de modo que al
+    # cumplirse el tiempo la sesión termina de verdad y no se renueva sola.
+    SESSION_TIMEOUT_SECONDS = _resolver_timeout_sesion()
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(seconds=SESSION_TIMEOUT_SECONDS)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(seconds=SESSION_TIMEOUT_SECONDS)
 
     # Cookies/tokens: endurecimiento básico de sesión
     JWT_COOKIE_SECURE = _IS_PROD          # solo enviar por HTTPS en producción

@@ -16,7 +16,7 @@ endobj
 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
 endobj
 6 0 obj
-<< /Length 10537 >>
+<< /Length 11143 >>
 stream
 q
 0.99 0.98 0.96 rg
@@ -342,50 +342,50 @@ ET
 BT
 /F1 9.5 Tf
 0.06 0.16 0.28 rg
-441.75 463.7 Td
-(Reglas IF-THEN parametrizadas para) Tj
+444.13 463.7 Td
+(Sistema experto de reglas IF-THEN) Tj
 ET
 BT
 /F1 9.5 Tf
 0.06 0.16 0.28 rg
-434.63 452.3 Td
+439.38 452.3 Td
+(parametrizadas y ponderaciones para) Tj
+ET
+BT
+/F1 9.5 Tf
+0.06 0.16 0.28 rg
+434.63 440.9 Td
 (obtener puntaje y clasificación Alto,) Tj
 ET
 BT
 /F1 9.5 Tf
 0.06 0.16 0.28 rg
-437 440.9 Td
-(Medio o Bajo; apto/no apto según las) Tj
+453.63 429.5 Td
+(Medio o Bajo; no es un modelo) Tj
 ET
 BT
 /F1 9.5 Tf
 0.06 0.16 0.28 rg
-505.88 429.5 Td
-(reglas.) Tj
+467.88 418.1 Td
+(estadístico predictivo.) Tj
 ET
 BT
 /F1 9.5 Tf
 0.06 0.16 0.28 rg
-434.63 406.7 Td
-(Verificación automática contra listas) Tj
+444.13 395.3 Td
+(Cotejo contra listas de sanciones) Tj
 ET
 BT
 /F1 9.5 Tf
 0.06 0.16 0.28 rg
-432.25 395.3 Td
-(negras \(ONU/OFAC\): diferenciador clave) Tj
+432.25 383.9 Td
+(\(ONU/OFAC\): una coincidencia fuerza la) Tj
 ET
 BT
 /F1 9.5 Tf
 0.06 0.16 0.28 rg
-429.88 383.9 Td
-(que bloquea evaluaciones con alertas de) Tj
-ET
-BT
-/F1 9.5 Tf
-0.06 0.16 0.28 rg
-496.38 372.5 Td
-(compliance.) Tj
+453.63 372.5 Td
+(clasificación de riesgo alto.) Tj
 ET
 BT
 /F1 9.5 Tf
@@ -408,14 +408,14 @@ ET
 BT
 /F1 9.5 Tf
 0.06 0.16 0.28 rg
-441.75 304.1 Td
-(evaluación de 20-40 min a 5-10 min) Tj
+432.25 304.1 Td
+(evaluación respecto del proceso manual) Tj
 ET
 BT
 /F1 9.5 Tf
 0.06 0.16 0.28 rg
-444.13 292.7 Td
-(\(estimación sujeta a validación\).) Tj
+470.25 292.7 Td
+(\(sujeto a validación\).) Tj
 ET
 BT
 /F1 9.5 Tf
@@ -692,40 +692,64 @@ BT
 (Costos) Tj
 ET
 BT
-/F1 7.6 Tf
+/F1 6.8 Tf
 0.06 0.16 0.28 rg
-198.7 139.06 Td
-(Infraestructura y alojamiento del sistema.) Tj
+49 138.66 Td
+(Inversion inicial \(unica\): desarrollo del sistema ~Gs. 9.532.200 \(RRHH 500 h, hardware y licencias\). Costo ya ejecutado en el proyecto.) Tj
 ET
 BT
-/F1 7.6 Tf
+/F1 6.8 Tf
 0.06 0.16 0.28 rg
-162.6 120.82 Td
-(Base de datos PostgreSQL administrada y servicios necesarios.) Tj
+212.2 122.34 Td
+(Costos recurrentes \(operacion mensual\):) Tj
 ET
 BT
-/F1 7.6 Tf
+/F1 6.8 Tf
 0.06 0.16 0.28 rg
-208.2 102.58 Td
-(Dominio y operación de la plataforma.) Tj
+200.3 114.18 Td
+(- Hosting backend \(Render Starter\): Gs. 51.100) Tj
 ET
 BT
-/F1 7.6 Tf
+/F1 6.8 Tf
 0.06 0.16 0.28 rg
-153.1 84.34 Td
-(Mantenimiento, actualizaciones funcionales y del motor de scoring.) Tj
+198.6 106.02 Td
+(- Base de datos PostgreSQL \(Render\): Gs. 51.100) Tj
 ET
 BT
-/F1 7.6 Tf
+/F1 6.8 Tf
 0.06 0.16 0.28 rg
-166.4 66.1 Td
-(Seguridad, respaldos, soporte técnico y operación continua.) Tj
+212.2 97.86 Td
+(- Frontend \(Render Static, Free\): Gs. 0) Tj
 ET
 BT
-/F1 7.6 Tf
+/F1 6.8 Tf
 0.06 0.16 0.28 rg
-164.5 47.86 Td
-(Montos exactos: por definir según proveedor y escala de uso.) Tj
+219 89.7 Td
+(- Dominio \(prorrateado\): ~Gs. 7.300) Tj
+ET
+BT
+/F1 6.8 Tf
+0.06 0.16 0.28 rg
+164.6 81.54 Td
+(- Mantenimiento y actualizaciones del motor de scoring: ~Gs. 40.000) Tj
+ET
+BT
+/F1 6.8 Tf
+0.06 0.16 0.28 rg
+188.4 73.38 Td
+(- Soporte tecnico, seguridad y respaldos: ~Gs. 30.000) Tj
+ET
+BT
+/F1 6.8 Tf
+0.06 0.16 0.28 rg
+188.4 65.22 Td
+(Subtotal fijo: ~Gs. 179.600/mes \(~Gs. 2.154.000/ano\).) Tj
+ET
+BT
+/F1 6.8 Tf
+0.06 0.16 0.28 rg
+120.4 48.9 Td
+(Costo variable: comision de la pasarela \(Pagopar\) por transaccion, proporcional a las ventas.) Tj
 ET
 q
 1 0.95 0.78 rg
@@ -754,8 +778,8 @@ ET
 BT
 /F1 7.7 Tf
 0.06 0.16 0.28 rg
-676.73 125.76 Td
-(Qué paga: paquetes prepago de evaluaciones/reportes de scoring.) Tj
+599.73 125.76 Td
+(Qué paga: suscripción mensual por planes con facturación por período \(reportes/evaluaciones incluidos\).) Tj
 ET
 BT
 /F1 7.7 Tf
@@ -778,14 +802,14 @@ ET
 BT
 /F1 7.7 Tf
 0.06 0.16 0.28 rg
-661.33 70.32 Td
-(Si supera su paquete, puede adquirir reportes/evaluaciones adicionales.) Tj
+605.5 70.32 Td
+(Los reportes que superan el cupo del período se facturan como evaluaciones adicionales \(excedentes\).) Tj
 ET
 BT
 /F1 7.7 Tf
 0.06 0.16 0.28 rg
-601.65 51.84 Td
-(Los ingresos por paquetes y adicionales sostienen infraestructura, mantenimiento, seguridad, soporte y) Tj
+597.8 51.84 Td
+(Los ingresos por suscripción y excedentes sostienen infraestructura, mantenimiento, seguridad, soporte y) Tj
 ET
 BT
 /F1 7.7 Tf
@@ -814,5 +838,5 @@ xref
 trailer
 << /Size 7 /Root 1 0 R >>
 startxref
-11047
+11653
 %%EOF
