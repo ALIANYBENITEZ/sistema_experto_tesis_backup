@@ -23,7 +23,12 @@ services:
     plan: starter          # $7/mes: no se duerme por inactividad
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 3 --timeout 120 "app:create_app()"
+    # 1 worker: el control de sesión única por usuario mantiene las sesiones
+    # activas en memoria del proceso. Con varios workers, cada uno tendría su
+    # propia memoria y las peticiones caerían en procesos que no conocen la
+    # sesión, cerrándola por error. Con un solo worker el registro es único y
+    # consistente. (El tráfico esperado es bajo, así que 1 worker es suficiente.)
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 120 "app:create_app()"
     healthCheckPath: /api/health
     envVars:
       - key: FLASK_ENV
