@@ -51,7 +51,7 @@ def _resolver_timeout_sesion() -> int:
     try:
         segundos = int(valor)
     except (TypeError, ValueError):
-        segundos = 1800
+        segundos = 30
     # Piso de seguridad: al menos 30 s para no dejar la sesión inutilizable.
     return segundos if segundos >= 30 else 1800
 
