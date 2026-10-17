@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { LogOut } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
@@ -8,31 +8,34 @@ import toast from 'react-hot-toast'
  * Intercepta el botón "atrás" del navegador mientras el usuario está dentro de
  * la aplicación (sesión iniciada) y pregunta si desea cerrar sesión.
  *
- * Cómo funciona: al montarse empuja un estado al historial del navegador. Si el
- * usuario pulsa "atrás", el navegador dispara 'popstate' en vez de salir; ahí
- * mostramos el diálogo y volvemos a dejar el estado en el historial para seguir
- * "atrapando" el botón hasta que el usuario decida. Si confirma, se cierra la
- * sesión y se va al login; si cancela, permanece en la página actual.
+ * Estrategia: mantener SIEMPRE una entrada "guard" en la cima del historial.
+ * Cada vez que cambia la ruta (el usuario navega), se reinyecta esa entrada, de
+ * modo que el próximo "atrás" dispare 'popstate' en esta guardia en lugar de
+ * retroceder de página. Al detectar el 'popstate' se muestra el diálogo y se
+ * vuelve a sembrar la entrada para seguir atrapando el botón hasta que el
+ * usuario decida. Si confirma, se cierra sesión; si cancela, permanece.
  */
 export default function ConfirmLogoutOnBack() {
   const { logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [visible, setVisible] = useState(false)
   const cerrandoRef = useRef(false)
 
+  // Reinyectar la entrada "guard" en cada cambio de ruta. Así, sin importar en
+  // qué página esté el usuario, el próximo "atrás" cae en nuestra guardia.
   useEffect(() => {
-    // Sembrar una entrada en el historial para capturar el primer "atrás".
     window.history.pushState({ guard: true }, '')
+  }, [location.pathname])
 
+  useEffect(() => {
     const onPopState = () => {
-      // Si ya estamos cerrando sesión, no reintervenir.
       if (cerrandoRef.current) return
-      // Volver a empujar el estado para no perder el control del botón atrás
-      // mientras el usuario decide en el diálogo.
+      // Volver a dejar la entrada en el historial para no perder el control
+      // del botón atrás mientras el usuario decide en el diálogo.
       window.history.pushState({ guard: true }, '')
       setVisible(true)
     }
-
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
   }, [])
@@ -42,7 +45,6 @@ export default function ConfirmLogoutOnBack() {
     setVisible(false)
     try { await logout() } catch {}
     toast.success('Sesión cerrada')
-    // Reemplazar para que el login no quede "detrás" en el historial.
     navigate('/login', { replace: true })
   }
 
