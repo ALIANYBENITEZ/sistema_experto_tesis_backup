@@ -14,6 +14,8 @@ from app.utils.decorators import get_current_user, propietario_required, admin_r
 from app.utils.responses import success, error
 from app.services.auditoria_service import registrar as auditar
 from app.services import pagopar_service
+from app.services.consumo_service import obtener_periodo, SinPlanError
+from sqlalchemy.exc import IntegrityError
 from . import facturacion_bp
 import uuid
 
@@ -502,3 +504,119 @@ def desbloquear_empresa(empresa_id):
             entidad="Empresa", registro_id=empresa.id, resultado="EXITO",
             info={"empresa_nombre": empresa.nombre})
     return success(message=f"Consultas desbloqueadas para {empresa.nombre}")
+
+
+# ══════════════════════════════════════════════════════════════
+#  PROPIETARIO — Generación mensual de facturación
+#  (se ejecuta a principio de cada mes, según el plan de cada empresa)
+# ══════════════════════════════════════════════════════════════
+
+_MESES_ES = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio",
+             "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+
+
+def _clasificar_empresas_mes(anio, mes):
+    """
+    Clasifica las empresas activas según el estado de su facturación del mes:
+      - generadas: ya tienen período (factura) para (anio, mes)
+      - pendientes: no tienen período y sí tienen plan activo (se pueden generar)
+      - sin_plan: no tienen período ni plan activo (se omiten)
+    """
+    empresas = (Empresa.query
+                .filter(Empresa.id > 0, Empresa.activo.is_(True))
+                .order_by(Empresa.nombre).all())
+    con_periodo = {
+        p.empresa_id for p in PeriodoFacturacion.query.filter_by(anio=anio, mes=mes).all()
+    }
+    con_plan = {
+        ep.empresa_id for ep in EmpresaPlan.query.filter_by(estado="activo").all()
+    }
+
+    generadas, pendientes, sin_plan = [], [], []
+    for emp in empresas:
+        if emp.id in con_periodo:
+            generadas.append(emp)
+        elif emp.id in con_plan:
+            pendientes.append(emp)
+        else:
+            sin_plan.append(emp)
+    return generadas, pendientes, sin_plan
+
+
+@facturacion_bp.route("/admin/generar-periodos/estado", methods=["GET"])
+@propietario_required
+def estado_generacion_mes():
+    """Informa cuántas empresas ya tienen su factura del mes actual y cuántas faltan."""
+    ahora = datetime.now(timezone.utc)
+    generadas, pendientes, sin_plan = _clasificar_empresas_mes(ahora.year, ahora.month)
+
+    return success(data={
+        "anio": ahora.year,
+        "mes": ahora.month,
+        "mes_nombre": _MESES_ES[ahora.month],
+        "generadas": len(generadas),
+        "pendientes": len(pendientes),
+        "sin_plan": [e.nombre for e in sin_plan],
+    })
+
+
+@facturacion_bp.route("/admin/generar-periodos", methods=["POST"])
+@propietario_required
+def generar_periodos_mes():
+    """
+    Genera la facturación (período) del mes actual para todas las empresas activas
+    con plan que todavía no la tengan. Es idempotente: las ya generadas se respetan.
+    """
+    current_user = get_current_user()
+    ahora = datetime.now(timezone.utc)
+    anio, mes = ahora.year, ahora.month
+    etiqueta = f"{_MESES_ES[mes]} {anio}"
+
+    generadas, pendientes, sin_plan = _clasificar_empresas_mes(anio, mes)
+
+    if not pendientes:
+        return success(
+            data={"creados": 0, "ya_generados": len(generadas),
+                  "sin_plan": [e.nombre for e in sin_plan], "mes_nombre": _MESES_ES[mes],
+                  "anio": anio, "mes": mes},
+            message=(f"La facturación de {etiqueta} ya fue generada."
+                     if generadas else "No hay empresas con plan para facturar."),
+        )
+
+    creados = 0
+    ya_generados = len(generadas)
+    try:
+        for emp in pendientes:
+            try:
+                # Savepoint por empresa: si otro proceso creó el período en paralelo
+                # (UniqueConstraint uq_periodo_empresa_mes) solo se descarta esa empresa.
+                with db.session.begin_nested():
+                    _, creado = obtener_periodo(emp.id, anio, mes)
+                if creado:
+                    creados += 1
+                else:
+                    ya_generados += 1
+            except IntegrityError:
+                ya_generados += 1
+            except SinPlanError:
+                sin_plan.append(emp)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.error("Error generando facturación mensual:\n%s", traceback.format_exc())
+        auditar("FACTURACION", "GENERAR_PERIODOS_MES", usuario=current_user, modulo="Facturacion",
+                entidad="PeriodoFacturacion", resultado="FALLO",
+                info={"anio": anio, "mes": mes})
+        return error("No se pudo generar la facturación del mes", 500)
+
+    auditar("FACTURACION", "GENERAR_PERIODOS_MES", usuario=current_user, modulo="Facturacion",
+            entidad="PeriodoFacturacion", resultado="EXITO",
+            info={"anio": anio, "mes": mes, "creados": creados,
+                  "ya_generados": ya_generados, "sin_plan": len(sin_plan)})
+
+    return success(
+        data={"creados": creados, "ya_generados": ya_generados,
+              "sin_plan": [e.nombre for e in sin_plan], "mes_nombre": _MESES_ES[mes],
+              "anio": anio, "mes": mes},
+        message=f"Facturación de {etiqueta} generada para {creados} empresa(s).",
+    )

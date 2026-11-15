@@ -32,18 +32,22 @@ def verificar_habilitacion(empresa_id: int):
         )
 
 
-def obtener_periodo_actual(empresa_id: int) -> PeriodoFacturacion:
-    """Obtiene o crea el período de facturación del mes actual."""
-    ahora = datetime.now(timezone.utc)
-    anio = ahora.year
-    mes = ahora.month
+def obtener_periodo(empresa_id: int, anio: int, mes: int):
+    """
+    Obtiene o crea el período de facturación de una empresa para (anio, mes).
+    Usa el plan activo de la empresa. Hace flush (no commit).
 
+    Returns:
+        (periodo, creado): `creado` es True solo si el período se creó en esta llamada.
+    Raises:
+        SinPlanError: si la empresa no tiene un plan activo.
+    """
     periodo = PeriodoFacturacion.query.filter_by(
         empresa_id=empresa_id, anio=anio, mes=mes
     ).first()
 
     if periodo:
-        return periodo
+        return periodo, False
 
     # Crear período nuevo
     plan_vigente = EmpresaPlan.query.filter_by(
@@ -71,6 +75,13 @@ def obtener_periodo_actual(empresa_id: int) -> PeriodoFacturacion:
     )
     db.session.add(periodo)
     db.session.flush()
+    return periodo, True
+
+
+def obtener_periodo_actual(empresa_id: int) -> PeriodoFacturacion:
+    """Obtiene o crea el período de facturación del mes actual."""
+    ahora = datetime.now(timezone.utc)
+    periodo, _ = obtener_periodo(empresa_id, ahora.year, ahora.month)
     return periodo
 
 

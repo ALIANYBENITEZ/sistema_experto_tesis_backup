@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
-import { CreditCard, Lock, Unlock, RefreshCw } from 'lucide-react'
-import { getFacturacionEmpresas, getPlanes, asignarPlan, bloquearEmpresa, desbloquearEmpresa } from '../../api/facturacionApi'
+import { CreditCard, Lock, Unlock, RefreshCw, FilePlus, X, CheckCircle2, AlertTriangle } from 'lucide-react'
+import {
+  getFacturacionEmpresas, getPlanes, asignarPlan, bloquearEmpresa, desbloquearEmpresa,
+  getEstadoGeneracionMes, generarFacturasMes,
+} from '../../api/facturacionApi'
 import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 
@@ -10,6 +13,12 @@ export default function AdminFacturacionPage() {
   const [planes, setPlanes] = useState([])
   const [loading, setLoading] = useState(true)
   const [asignando, setAsignando] = useState(null) // empresa_id
+
+  // Generación mensual de facturación
+  const [modalGenerar, setModalGenerar] = useState(false)
+  const [estadoMes, setEstadoMes] = useState(null)
+  const [cargandoEstado, setCargandoEstado] = useState(false)
+  const [generando, setGenerando] = useState(false)
 
   const fetch = async () => {
     setLoading(true)
@@ -49,6 +58,36 @@ export default function AdminFacturacionPage() {
     } catch { toast.error('Error') }
   }
 
+  const abrirModalGenerar = async () => {
+    setModalGenerar(true)
+    setEstadoMes(null)
+    setCargandoEstado(true)
+    try {
+      const res = await getEstadoGeneracionMes()
+      setEstadoMes(res.data.data)
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'No se pudo consultar el estado del mes')
+      setModalGenerar(false)
+    } finally { setCargandoEstado(false) }
+  }
+
+  const cerrarModalGenerar = () => {
+    if (generando) return
+    setModalGenerar(false)
+  }
+
+  const handleGenerarMes = async () => {
+    setGenerando(true)
+    try {
+      const res = await generarFacturasMes()
+      toast.success(res.data.message)
+      setModalGenerar(false)
+      fetch()
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Error al generar la facturación')
+    } finally { setGenerando(false) }
+  }
+
   if (!isPropietario) return <p className="text-gray-400 text-center py-12">Acceso no autorizado</p>
 
   if (loading) return <div className="flex justify-center py-16"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" /></div>
@@ -63,9 +102,14 @@ export default function AdminFacturacionPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Facturación — Administración</h1>
-        <p className="text-gray-500 text-sm">Gestión de planes, consumo y pagos de todas las empresas</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Facturación — Administración</h1>
+          <p className="text-gray-500 text-sm">Gestión de planes, consumo y pagos de todas las empresas</p>
+        </div>
+        <button onClick={abrirModalGenerar} className="btn btn-primary flex items-center gap-2">
+          <FilePlus className="h-4 w-4" /> Generar facturación del mes
+        </button>
       </div>
 
       {/* Stats */}
@@ -141,6 +185,74 @@ export default function AdminFacturacionPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Pop up: generar facturación del mes */}
+      {modalGenerar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={cerrarModalGenerar}>
+          <div className="bg-white rounded-xl w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Generar facturación del mes</h2>
+              <button onClick={cerrarModalGenerar} className="text-gray-400 hover:text-gray-600" aria-label="Cerrar">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="px-5 py-4 space-y-3 text-sm text-gray-700">
+              {cargandoEstado || !estadoMes ? (
+                <div className="flex justify-center py-6">
+                  <div className="h-7 w-7 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
+                </div>
+              ) : (() => {
+                const { mes_nombre, anio, generadas, pendientes, sin_plan } = estadoMes
+                const periodo = `${mes_nombre} ${anio}`
+                const nadaParaFacturar = pendientes === 0 && generadas === 0
+                const yaGenerado = pendientes === 0 && generadas > 0
+                const parcial = pendientes > 0 && generadas > 0
+                return (
+                  <>
+                    {yaGenerado && (
+                      <div className="flex gap-2 rounded-lg bg-green-50 border border-green-200 p-3 text-green-800">
+                        <CheckCircle2 className="h-5 w-5 shrink-0" />
+                        <p>La facturación de <b>{periodo}</b> ya fue generada para las {generadas} empresa(s) con plan. No hay nada pendiente.</p>
+                      </div>
+                    )}
+                    {parcial && (
+                      <div className="flex gap-2 rounded-lg bg-yellow-50 border border-yellow-200 p-3 text-yellow-800">
+                        <AlertTriangle className="h-5 w-5 shrink-0" />
+                        <p>La facturación de <b>{periodo}</b> ya fue generada para {generadas} empresa(s). Se generará solo para las <b>{pendientes}</b> restante(s).</p>
+                      </div>
+                    )}
+                    {!yaGenerado && !parcial && !nadaParaFacturar && (
+                      <p>Se generará la facturación del mes actual (<b>{periodo}</b>) para <b>{pendientes}</b> empresa(s), según el plan contratado por cada una. Las órdenes de pago aparecerán en la facturación de cada cliente.</p>
+                    )}
+                    {nadaParaFacturar && (
+                      <div className="flex gap-2 rounded-lg bg-gray-50 border border-gray-200 p-3 text-gray-700">
+                        <AlertTriangle className="h-5 w-5 shrink-0" />
+                        <p>No hay empresas con plan activo para facturar en <b>{periodo}</b>.</p>
+                      </div>
+                    )}
+                    {sin_plan.length > 0 && (
+                      <p className="text-xs text-gray-500">
+                        Se omitirán {sin_plan.length} empresa(s) sin plan asignado: {sin_plan.join(', ')}.
+                      </p>
+                    )}
+                    <div className="flex justify-end gap-2 pt-2">
+                      <button onClick={cerrarModalGenerar} disabled={generando} className="btn btn-secondary">
+                        {pendientes === 0 ? 'Cerrar' : 'Cancelar'}
+                      </button>
+                      {pendientes > 0 && (
+                        <button onClick={handleGenerarMes} disabled={generando} className="btn btn-primary">
+                          {generando ? 'Generando...' : `Generar para ${pendientes} empresa(s)`}
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

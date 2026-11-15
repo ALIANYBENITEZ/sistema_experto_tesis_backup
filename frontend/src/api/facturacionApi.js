@@ -24,3 +24,5 @@ export const getFacturacionEmpresas = ()              => api.get('/facturacion/a
 export const asignarPlan            = (empresaId, data) => api.post(`/facturacion/admin/empresas/${empresaId}/asignar-plan`, data)
 export const bloquearEmpresa        = (empresaId, data) => api.post(`/facturacion/admin/empresas/${empresaId}/bloquear`, data)
 export const desbloquearEmpresa     = (empresaId)     => api.post(`/facturacion/admin/empresas/${empresaId}/desbloquear`)
+export const getEstadoGeneracionMes = ()              => api.get('/facturacion/admin/generar-periodos/estado')
+export const generarFacturasMes     = ()              => api.post('/facturacion/admin/generar-periodos')
