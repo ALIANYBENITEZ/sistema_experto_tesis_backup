@@ -32,17 +32,33 @@ def clasificar_riesgo(score_total: float, umbrales: list) -> str:
         else:
             return RIESGO_ALTO
 
+    # Un score inferior al primer umbral representa un perfil aún más favorable.
+    # No debe caer en el fallback de alto riesgo solo por ser negativo.
+    primer_umbral = min(umbrales, key=lambda u: float(u.score_min))
+    if score_total < float(primer_umbral.score_min):
+        return primer_umbral.nivel
+
     # Si excede todos los umbrales → alto riesgo
     return RIESGO_ALTO
 
 
-def resumen_presentacion(clasificacion: str) -> dict:
+def resumen_presentacion(clasificacion: str, score_total: float = None) -> dict:
     """Expone la relación entre cumplimiento y nivel de riesgo sin cambiar el cálculo.
 
     El Core conserva el nivel de riesgo original en ``clasificacion``. La interfaz
     muestra además la lectura de cumplimiento: un riesgo bajo implica cumplimiento
     alto y una decisión favorable; un riesgo alto implica cumplimiento bajo.
+    Los scores negativos se consideran riesgo bajo, porque están por debajo del
+    primer umbral y representan un resultado más favorable.
     """
+    nivel_riesgo = clasificacion
+    if score_total is not None:
+        try:
+            if float(score_total) < 0:
+                nivel_riesgo = RIESGO_BAJO
+        except (TypeError, ValueError):
+            pass
+
     datos = {
         RIESGO_BAJO: {
             "cumplimiento": "alto",
@@ -60,4 +76,4 @@ def resumen_presentacion(clasificacion: str) -> dict:
             "decision": "desfavorable",
         },
     }
-    return datos.get(clasificacion, datos[RIESGO_ALTO]).copy()
+    return datos.get(nivel_riesgo, datos[RIESGO_ALTO]).copy()

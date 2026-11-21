@@ -146,7 +146,7 @@ def evaluar():
     # Respuesta
     resp = evaluacion.to_dict(include_detalles=True)
     resp["impacto"] = resultado["impacto"]
-    resp.update(resumen_presentacion(evaluacion.clasificacion))
+    resp.update(resumen_presentacion(evaluacion.clasificacion, evaluacion.score_total))
     resp["lista_negra"] = resultado.get("lista_negra")
     resp["cliente_nombre"] = f"{cliente.nombre} {cliente.apellido or ''}".strip()
     resp["cliente_num_doc"] = cliente.num_doc
@@ -178,7 +178,7 @@ def list_evaluaciones():
         if c:
             d["cliente_nombre"] = f"{c.nombre} {c.apellido or ''}".strip()
             d["num_doc"] = c.num_doc
-        d.update(resumen_presentacion(ev.clasificacion))
+        d.update(resumen_presentacion(ev.clasificacion, ev.score_total))
         items.append(d)
 
     return success(data={
@@ -194,7 +194,7 @@ def list_evaluaciones():
 def get_evaluacion(eval_id):
     ev = EvaluacionScoring.query.get_or_404(eval_id)
     data = ev.to_dict(include_detalles=True)
-    data.update(resumen_presentacion(ev.clasificacion))
+    data.update(resumen_presentacion(ev.clasificacion, ev.score_total))
     c = Client.query.get(ev.cliente_id)
     if c:
         data["cliente_nombre"] = f"{c.nombre} {c.apellido or ''}".strip()
@@ -256,7 +256,7 @@ def export_evaluacion_pdf(eval_id):
     # ── DATOS GENERALES ──
     COLORES_NIVEL = {"bajo": "#16a34a", "medio": "#ca8a04", "alto": "#dc2626"}
     color_clasif = COLORES_NIVEL.get(ev.clasificacion, "#333")
-    presentacion = resumen_presentacion(ev.clasificacion)
+    presentacion = resumen_presentacion(ev.clasificacion, ev.score_total)
 
     info_data = [
         ["Evaluación N°:", str(ev.id), "Fecha:", ev.fecha.strftime("%d/%m/%Y %H:%M") if ev.fecha else ""],

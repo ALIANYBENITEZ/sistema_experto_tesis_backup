@@ -46,7 +46,8 @@ export default function CoreResultadoPage() {
   )
   if (!ev) return null
 
-  const cfg = NIVEL_CONFIG[ev.clasificacion] || NIVEL_CONFIG.alto
+  const riskKey = ev.nivel_riesgo || ev.clasificacion
+  const cfg = NIVEL_CONFIG[riskKey] || NIVEL_CONFIG.alto
   const cumplimiento = (ev.cumplimiento || cfg.cumplimiento).toUpperCase()
   const nivelRiesgo = (ev.nivel_riesgo || cfg.label).toUpperCase()
   const decision = (ev.decision || cfg.decision).toUpperCase()
