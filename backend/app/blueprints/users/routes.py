@@ -2,27 +2,33 @@ from flask import request
 from flask_jwt_extended import jwt_required
 from app.extensions import db
 from app.models import User
-from app.utils.decorators import admin_required
+from app.utils.decorators import propietario_required, get_current_user
 from app.utils.responses import success, error
 from . import users_bp
 
+# Gestión global de usuarios: exclusiva del propietario de la plataforma.
+# Coincide con la interfaz (menú «Usuarios» solo visible para el propietario).
+# El administrador de empresa no gestiona usuarios: solo consulta los de su
+# empresa y restablece su 2FA desde /api/auth/security/users y /api/auth/2fa/reset.
+ROLES_ASIGNABLES = (User.ROL_ADMIN, User.ROL_COMERCIAL)
+
 
 @users_bp.route("/", methods=["GET"])
-@admin_required
+@propietario_required
 def list_users():
     users = User.query.order_by(User.id).all()
     return success(data=[u.to_dict() for u in users])
 
 
 @users_bp.route("/<int:user_id>", methods=["GET"])
-@admin_required
+@propietario_required
 def get_user(user_id):
     user = User.query.get_or_404(user_id)
     return success(data=user.to_dict())
 
 
 @users_bp.route("/", methods=["POST"])
-@admin_required
+@propietario_required
 def create_user():
     data = request.get_json(silent=True)
     if not data:
@@ -33,8 +39,8 @@ def create_user():
     if missing:
         return error(f"Campos requeridos: {', '.join(missing)}", 400)
 
-    if data["rol"] not in (User.ROL_ADMIN, User.ROL_OPERADOR):
-        return error("Rol inválido. Use 'administrador' u 'operador'", 400)
+    if data["rol"] not in ROLES_ASIGNABLES:
+        return error("Rol inválido. Use 'administrador' o 'comercial'", 400)
 
     if User.query.filter_by(email=data["email"].lower()).first():
         return error("El email ya está registrado", 409)
@@ -52,7 +58,7 @@ def create_user():
 
 
 @users_bp.route("/<int:user_id>", methods=["PUT"])
-@admin_required
+@propietario_required
 def update_user(user_id):
     user = User.query.get_or_404(user_id)
     data = request.get_json(silent=True) or {}
@@ -67,9 +73,12 @@ def update_user(user_id):
         if existing and existing.id != user_id:
             return error("El email ya está en uso", 409)
         user.email = new_email
-    if "rol" in data:
-        if data["rol"] not in (User.ROL_ADMIN, User.ROL_OPERADOR):
-            return error("Rol inválido", 400)
+    if "rol" in data and data["rol"] != user.rol:
+        # El rol del propietario no se cambia desde aquí: dejaría la plataforma sin propietario.
+        if user.is_propietario():
+            return error("No se puede cambiar el rol del propietario", 400)
+        if data["rol"] not in ROLES_ASIGNABLES:
+            return error("Rol inválido. Use 'administrador' o 'comercial'", 400)
         user.rol = data["rol"]
     if "password" in data and data["password"]:
         user.set_password(data["password"])
@@ -79,9 +88,11 @@ def update_user(user_id):
 
 
 @users_bp.route("/<int:user_id>/toggle", methods=["PATCH"])
-@admin_required
+@propietario_required
 def toggle_user(user_id):
     user = User.query.get_or_404(user_id)
+    if user.id == get_current_user().id:
+        return error("No puede desactivar su propio usuario", 400)
     user.activo = not user.activo
     db.session.commit()
     estado = "activado" if user.activo else "desactivado"

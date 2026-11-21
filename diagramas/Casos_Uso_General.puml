@@ -1,0 +1,92 @@
+@startuml Casos_Uso_General
+' ============================================================
+' Diagrama General de Casos de Uso
+' Sistema de Evaluación de Riesgo Crediticio para Inmobiliaria
+'
+' Refleja los permisos reales del sistema (menús del frontend y
+' decoradores de la API):
+'  - Generalización: el Administrador hereda los casos de uso del
+'    Operador, y el Propietario hereda los del Administrador.
+'  - Operador: clientes, evaluaciones y reportes de su empresa.
+'  - Administrador: además consulta la auditoría y la facturación de su
+'    empresa, consulta en modo lectura el modelo de scoring asignado y
+'    restablece el 2FA de los usuarios de su empresa. No crea ni edita
+'    usuarios.
+'  - Propietario: además gestiona usuarios y empresas y configura el
+'    motor de reglas, los modelos y los criterios (propietario_required).
+'  - CU-05 incluye la verificación de sanciones (ONU/OFAC).
+' ============================================================
+left to right direction
+skinparam shadowing false
+skinparam dpi 200
+skinparam defaultFontName Arial
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F1F1F1
+  BorderColor #555555
+}
+skinparam actor {
+  BackgroundColor #F1F1F1
+  BorderColor #555555
+}
+
+title Sistema de Evaluación de Riesgo Crediticio para Inmobiliaria
+
+actor "Propietario" as PROP
+actor "Administrador" as ADM
+actor "Operador" as OPE
+actor "Pasarela de Pago\n(Pagopar)" as PAGO
+
+rectangle "Sistema de Evaluación de Riesgo Crediticio" {
+  usecase "Solicitar código 2FA (OTP)" as OTP
+  usecase "CU-08\nGestionar empresas" as CU08
+  usecase "CU-04\nConfigurar motor de reglas\ny criterios" as CU04
+  usecase "CU-02\nGestionar usuarios" as CU02
+  usecase "CU-07\nConsultar auditoría" as CU07
+  usecase "Consultar modelo de scoring\n(solo lectura)" as CMS
+  usecase "Restablecer 2FA\nde usuarios" as RST
+  usecase "CU-09\nGestionar facturación" as CU09
+  usecase "CU-03\nGestionar clientes" as CU03
+  usecase "CU-05\nEvaluar riesgo de cliente" as CU05
+  usecase "CU-06\nGenerar reportes" as CU06
+  usecase "CU-01\nIniciar sesión (2FA)" as CU01
+  usecase "Verificar lista de sanciones\n(ONU/OFAC)" as SAN
+}
+
+' ── Generalización de actores ────────────────────────────
+ADM --|> OPE
+PROP --|> ADM
+
+' ── Propietario (exclusivos) ─────────────────────────────
+PROP --> CU08
+PROP --> CU04
+PROP --> CU02
+
+' ── Administrador (y, por herencia, Propietario) ─────────
+ADM --> CU07
+ADM --> CU09
+ADM --> CMS
+ADM --> RST
+
+' ── Operador (y, por herencia, Administrador y Propietario)
+OPE --> CU03
+OPE --> CU05
+OPE --> CU06
+
+PAGO --> CU09
+
+' ── Relaciones entre casos de uso ────────────────────────
+CU08 ..> CU01 : <<include>>
+CU04 ..> CU01 : <<include>>
+CU02 ..> CU01 : <<include>>
+CU07 ..> CU01 : <<include>>
+CU09 ..> CU01 : <<include>>
+CMS ..> CU01 : <<include>>
+RST ..> CU01 : <<include>>
+CU03 ..> CU01 : <<include>>
+CU05 ..> CU01 : <<include>>
+CU06 ..> CU01 : <<include>>
+CU05 ...> SAN : <<include>>
+OTP ..> CU01 : <<extend>>
+
+@enduml

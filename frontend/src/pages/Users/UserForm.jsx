@@ -7,7 +7,7 @@ export default function UserForm({ user, onSaved, onCancel }) {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     defaultValues: user
       ? { nombre: user.nombre, apellido: user.apellido, email: user.email, rol: user.rol, password: '' }
-      : { nombre: '', apellido: '', email: '', rol: 'operador', password: '' },
+      : { nombre: '', apellido: '', email: '', rol: 'comercial', password: '' },
   })
 
   const onSubmit = async (data) => {
@@ -57,10 +57,14 @@ export default function UserForm({ user, onSaved, onCancel }) {
 
       <div>
         <label className="label">Rol *</label>
-        <select className="input" {...register('rol', { required: true })}>
-          <option value="operador">Operador</option>
-          <option value="administrador">Administrador</option>
-        </select>
+        {user?.rol === 'propietario' ? (
+          <input className="input bg-gray-100" value="Propietario" disabled readOnly />
+        ) : (
+          <select className="input" {...register('rol', { required: true })}>
+            <option value="comercial">Operador (Comercial)</option>
+            <option value="administrador">Administrador</option>
+          </select>
+        )}
       </div>
 
       <div>
