@@ -18,7 +18,7 @@ const NAV_ITEMS = [
   { to: '/seguridad',   label: 'Seguridad',          icon: Lock,            roles: ['propietario', 'administrador'] },
   { to: '/auditoria',   label: 'Auditoría',          icon: ScrollText,      roles: ['propietario', 'administrador'] },
   { to: '/empresas',    label: 'Empresas Clientes',  icon: Briefcase,       roles: ['propietario'] },
-  { to: '/users',       label: 'Usuarios',           icon: Users,           roles: ['propietario'] },
+  { to: '/users',       label: 'Usuarios',           icon: Users,           roles: ['propietario', 'administrador'] },
 ]
 
 
