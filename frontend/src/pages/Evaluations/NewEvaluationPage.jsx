@@ -102,7 +102,7 @@ export default function NewEvaluationPage() {
       const v = formData[f.codigo]
       if (v !== '' && v !== undefined && v !== null) {
         if (f.tipo_dato === 'numerico' || f.tipo_dato === 'porcentaje') {
-          datos[f.codigo] = parseFloat(v)
+          datos[f.codigo] = parseNumericInput(v)
         } else if (f.tipo_dato === 'booleano') {
           datos[f.codigo] = v === 'true' || v === true
         } else {
@@ -113,7 +113,7 @@ export default function NewEvaluationPage() {
 
     // Calcular relación cuota/ingreso automáticamente
     if (formData.monto_cuota && datos.ingresos_mensuales) {
-      const cuota = parseFloat(formData.monto_cuota)
+      const cuota = parseNumericInput(formData.monto_cuota)
       const ingresos = datos.ingresos_mensuales
       if (ingresos > 0) {
         datos.relacion_cuota_ingreso = Math.round((cuota / ingresos) * 100 * 100) / 100
@@ -316,6 +316,33 @@ export default function NewEvaluationPage() {
 }
 
 // Componente para renderizar un factor según su tipo
+const MONEY_FACTOR_CODES = new Set([
+  'ingresos_mensuales',
+  'deuda_total_sistema',
+  'monto_operacion',
+  'valor_operacion',
+])
+
+const MONTH_FACTOR_CODES = new Set(['antiguedad_laboral', 'meses_empleo_actual'])
+
+function parseNumericInput(value) {
+  if (typeof value === 'number') return value
+  const text = String(value ?? '').trim()
+  if (!text) return NaN
+
+  // Los montos se muestran con punto de miles, por ejemplo: 2.500.000.
+  if (/^\d{1,3}(\.\d{3})+$/.test(text)) {
+    return Number(text.replace(/\./g, ''))
+  }
+
+  return Number(text.replace(',', '.'))
+}
+
+function formatThousands(value) {
+  const digits = String(value ?? '').replace(/\D/g, '')
+  return digits ? new Intl.NumberFormat('es-PY').format(Number(digits)) : ''
+}
+
 function FactorInput({ factor, register }) {
   const f = factor
 
@@ -327,12 +354,17 @@ function FactorInput({ factor, register }) {
           Monto de Cuota Solicitada (Gs) {f.obligatorio && <span className="text-red-500">*</span>}
         </label>
         <p className="text-xs text-gray-400 mb-2">El sistema calculará automáticamente el % sobre los ingresos</p>
-        <input type="number" step="any" min="0"
-          className="input text-sm" placeholder="Ej: 2500000"
-          {...register('monto_cuota')} />
+        <FormattedMoneyInput name="monto_cuota" register={register} placeholder="Ej: 2.500.000" suffix="Gs" />
       </div>
     )
   }
+
+  const esMonto = MONEY_FACTOR_CODES.has(f.codigo)
+  const suffix = MONTH_FACTOR_CODES.has(f.codigo)
+    ? 'meses'
+    : f.codigo === 'nivel_endeudamiento'
+      ? '%'
+      : null
 
   return (
     <div className="border border-gray-200 rounded-lg p-3">
@@ -342,9 +374,20 @@ function FactorInput({ factor, register }) {
       {f.descripcion && <p className="text-xs text-gray-400 mb-2">{f.descripcion}</p>}
 
       {(f.tipo_dato === 'numerico' || f.tipo_dato === 'porcentaje') && (
-        <input type="number" step="any" min="0" max={f.tipo_dato === 'porcentaje' ? 100 : undefined}
-          className="input text-sm" placeholder={f.tipo_dato === 'porcentaje' ? '0 - 100' : '0'}
-          {...register(f.codigo)} />
+        esMonto ? (
+          <FormattedMoneyInput name={f.codigo} register={register} placeholder="Ej: 8.000.000" suffix="Gs" />
+        ) : (
+          <InputWithSuffix
+            name={f.codigo}
+            register={register}
+            type="number"
+            step="any"
+            min="0"
+            max={f.tipo_dato === 'porcentaje' ? 100 : undefined}
+            placeholder={f.tipo_dato === 'porcentaje' ? '0 - 100' : '0'}
+            suffix={suffix}
+          />
+        )
       )}
 
       {f.tipo_dato === 'booleano' && (
@@ -365,6 +408,58 @@ function FactorInput({ factor, register }) {
       {f.tipo_dato === 'texto' && !f.catalogo && (
         <input type="text" className="input text-sm" {...register(f.codigo)} />
       )}
+    </div>
+  )
+}
+
+function InputWithSuffix({ name, register, suffix, ...props }) {
+  const field = register(name)
+
+  return (
+    <div className="relative">
+      <input
+        {...field}
+        {...props}
+        className={`input text-sm ${suffix ? 'pr-16' : ''}`}
+      />
+      {suffix && (
+        <span className="absolute inset-y-0 right-3 flex items-center text-xs font-medium text-gray-500 pointer-events-none">
+          {suffix}
+        </span>
+      )}
+    </div>
+  )
+}
+
+function FormattedMoneyInput({ name, register, placeholder, suffix }) {
+  const field = register(name)
+  const [displayValue, setDisplayValue] = useState('')
+
+  const handleChange = (event) => {
+    const formatted = formatThousands(event.target.value)
+    setDisplayValue(formatted)
+    field.onChange({
+      target: { name: field.name, value: formatted },
+      type: 'change',
+    })
+  }
+
+  return (
+    <div className="relative">
+      <input
+        ref={field.ref}
+        name={field.name}
+        type="text"
+        inputMode="numeric"
+        value={displayValue}
+        onChange={handleChange}
+        onBlur={field.onBlur}
+        className="input text-sm pr-16"
+        placeholder={placeholder}
+      />
+      <span className="absolute inset-y-0 right-3 flex items-center text-xs font-medium text-gray-500 pointer-events-none">
+        {suffix}
+      </span>
     </div>
   )
 }

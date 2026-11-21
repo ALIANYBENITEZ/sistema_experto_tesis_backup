@@ -5,9 +5,9 @@ import { coreGetEvaluacion, coreGetPdf } from '../../api/coreApi'
 import toast from 'react-hot-toast'
 
 const NIVEL_CONFIG = {
-  bajo:  { label: 'BAJO',  color: 'text-green-600', bg: 'bg-green-50 border-green-200', bar: '#16a34a' },
-  medio: { label: 'MEDIO', color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-200', bar: '#ca8a04' },
-  alto:  { label: 'ALTO',  color: 'text-red-600', bg: 'bg-red-50 border-red-200', bar: '#dc2626' },
+  bajo:  { label: 'ALTO',  cumplimiento: 'BAJO',  decision: 'DESFAVORABLE', color: 'text-red-600', bg: 'bg-red-50 border-red-200', bar: '#dc2626' },
+  medio: { label: 'MEDIO', cumplimiento: 'MEDIO', decision: 'CON OBSERVACIONES', color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-200', bar: '#ca8a04' },
+  alto:  { label: 'BAJO',  cumplimiento: 'ALTO',  decision: 'FAVORABLE', color: 'text-green-600', bg: 'bg-green-50 border-green-200', bar: '#16a34a' },
 }
 
 export default function CoreResultadoPage() {
@@ -47,6 +47,9 @@ export default function CoreResultadoPage() {
   if (!ev) return null
 
   const cfg = NIVEL_CONFIG[ev.clasificacion] || NIVEL_CONFIG.alto
+  const cumplimiento = (ev.cumplimiento || cfg.cumplimiento).toUpperCase()
+  const nivelRiesgo = (ev.nivel_riesgo || cfg.label).toUpperCase()
+  const decision = (ev.decision || cfg.decision).toUpperCase()
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -98,8 +101,10 @@ export default function CoreResultadoPage() {
         )}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-xs text-gray-500">Clasificación de Riesgo</p>
-            <p className={`text-3xl font-bold ${cfg.color}`}>RIESGO {cfg.label}</p>
+            <p className="text-xs text-gray-500">Clasificación de cumplimiento</p>
+            <p className={`text-3xl font-bold ${cfg.color}`}>CUMPLIMIENTO {cumplimiento}</p>
+            <p className={`text-sm font-semibold ${cfg.color}`}>Nivel de riesgo: {nivelRiesgo}</p>
+            <p className="text-xs text-gray-500 mt-1">Decisión: {decision}</p>
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-500">Score Total</p>

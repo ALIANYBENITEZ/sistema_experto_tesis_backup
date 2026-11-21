@@ -34,3 +34,30 @@ def clasificar_riesgo(score_total: float, umbrales: list) -> str:
 
     # Si excede todos los umbrales → alto riesgo
     return RIESGO_ALTO
+
+
+def resumen_presentacion(clasificacion: str) -> dict:
+    """Expone la relación entre cumplimiento y nivel de riesgo sin cambiar el cálculo.
+
+    El Core conserva el valor original de ``clasificacion`` y la interfaz lo presenta
+    como grado de cumplimiento. Por eso, una clasificación alta se muestra como
+    riesgo bajo y una clasificación baja como riesgo alto.
+    """
+    datos = {
+        RIESGO_BAJO: {
+            "cumplimiento": "bajo",
+            "nivel_riesgo": "alto",
+            "decision": "desfavorable",
+        },
+        RIESGO_MEDIO: {
+            "cumplimiento": "medio",
+            "nivel_riesgo": "medio",
+            "decision": "con observaciones",
+        },
+        RIESGO_ALTO: {
+            "cumplimiento": "alto",
+            "nivel_riesgo": "bajo",
+            "decision": "favorable",
+        },
+    }
+    return datos.get(clasificacion, datos[RIESGO_ALTO]).copy()

@@ -16,6 +16,7 @@ from .models import (
     UmbralScoring, EvaluacionScoring, DetalleEvaluacionScoring,
 )
 from .engine import ejecutar_evaluacion
+from .classifier import resumen_presentacion
 
 core_bp = Blueprint("core", __name__, url_prefix="/api/core")
 
@@ -145,6 +146,7 @@ def evaluar():
     # Respuesta
     resp = evaluacion.to_dict(include_detalles=True)
     resp["impacto"] = resultado["impacto"]
+    resp.update(resumen_presentacion(evaluacion.clasificacion))
     resp["lista_negra"] = resultado.get("lista_negra")
     resp["cliente_nombre"] = f"{cliente.nombre} {cliente.apellido or ''}".strip()
     resp["cliente_num_doc"] = cliente.num_doc
@@ -176,6 +178,7 @@ def list_evaluaciones():
         if c:
             d["cliente_nombre"] = f"{c.nombre} {c.apellido or ''}".strip()
             d["num_doc"] = c.num_doc
+        d.update(resumen_presentacion(ev.clasificacion))
         items.append(d)
 
     return success(data={
@@ -191,6 +194,7 @@ def list_evaluaciones():
 def get_evaluacion(eval_id):
     ev = EvaluacionScoring.query.get_or_404(eval_id)
     data = ev.to_dict(include_detalles=True)
+    data.update(resumen_presentacion(ev.clasificacion))
     c = Client.query.get(ev.cliente_id)
     if c:
         data["cliente_nombre"] = f"{c.nombre} {c.apellido or ''}".strip()
@@ -252,14 +256,15 @@ def export_evaluacion_pdf(eval_id):
     # ── DATOS GENERALES ──
     COLORES_NIVEL = {"bajo": "#16a34a", "medio": "#ca8a04", "alto": "#dc2626"}
     color_clasif = COLORES_NIVEL.get(ev.clasificacion, "#333")
+    presentacion = resumen_presentacion(ev.clasificacion)
 
     info_data = [
         ["Evaluación N°:", str(ev.id), "Fecha:", ev.fecha.strftime("%d/%m/%Y %H:%M") if ev.fecha else ""],
         ["Cliente:", f"{cliente.nombre} {cliente.apellido or ''}" if cliente else "N/A",
          "Documento:", cliente.num_doc if cliente else ""],
         ["Tipo persona:", ev.tipo_persona, "Modelo:", f"{ev.modelo_version}"],
-        ["Score total:", f"{ev.score_total:.1f} pts", "Clasificación:",
-         ev.clasificacion.upper()],
+        ["Score total:", f"{ev.score_total:.1f} pts", "Nivel de riesgo:",
+         presentacion["nivel_riesgo"].upper()],
     ]
     t = Table(info_data, colWidths=[3*cm, 6*cm, 3*cm, 5*cm])
     t.setStyle(TableStyle([
@@ -276,10 +281,11 @@ def export_evaluacion_pdf(eval_id):
     # ── RESULTADO ──
     elements.append(Paragraph("Resultado de la Evaluación", styles['Subtitulo']))
     result_box = Table(
-        [[Paragraph(f"<b>RIESGO {ev.clasificacion.upper()}</b>", styles['Normal']),
+        [[Paragraph(f"<b>CUMPLIMIENTO {presentacion['cumplimiento'].upper()}</b>", styles['Normal']),
+          Paragraph(f"<b>RIESGO {presentacion['nivel_riesgo'].upper()}</b>", styles['Normal']),
           Paragraph(f"Score: <b>{ev.score_total:.1f}</b> puntos", styles['Normal']),
           Paragraph(f"Factores evaluados: <b>{ev.factores_evaluados}</b>", styles['Normal'])]],
-        colWidths=[6*cm, 5*cm, 6*cm]
+        colWidths=[4.3*cm, 4.3*cm, 4.3*cm, 4.1*cm]
     )
     result_box.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#f0f9ff")),
