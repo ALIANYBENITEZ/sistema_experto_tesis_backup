@@ -5,9 +5,9 @@ import { coreGetEvaluacion, coreGetPdf } from '../../api/coreApi'
 import toast from 'react-hot-toast'
 
 const NIVEL_CONFIG = {
-  bajo:  { label: 'ALTO',  cumplimiento: 'BAJO',  decision: 'DESFAVORABLE', color: 'text-red-600', bg: 'bg-red-50 border-red-200', bar: '#dc2626' },
+  bajo:  { label: 'BAJO',  cumplimiento: 'ALTO',  decision: 'FAVORABLE', color: 'text-green-600', bg: 'bg-green-50 border-green-200', bar: '#16a34a' },
   medio: { label: 'MEDIO', cumplimiento: 'MEDIO', decision: 'CON OBSERVACIONES', color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-200', bar: '#ca8a04' },
-  alto:  { label: 'BAJO',  cumplimiento: 'ALTO',  decision: 'FAVORABLE', color: 'text-green-600', bg: 'bg-green-50 border-green-200', bar: '#16a34a' },
+  alto:  { label: 'ALTO',  cumplimiento: 'BAJO',  decision: 'DESFAVORABLE', color: 'text-red-600', bg: 'bg-red-50 border-red-200', bar: '#dc2626' },
 }
 
 export default function CoreResultadoPage() {
