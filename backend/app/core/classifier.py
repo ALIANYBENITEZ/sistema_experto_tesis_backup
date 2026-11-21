@@ -5,6 +5,15 @@ Determina la clasificación final basándose en el score total y los umbrales co
 from .schemas import RIESGO_BAJO, RIESGO_MEDIO, RIESGO_ALTO
 
 
+
+def normalizar_score(score_total: float) -> float:
+    """Garantiza que el score global nunca sea menor que cero."""
+    try:
+        return max(0.0, float(score_total or 0))
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def clasificar_riesgo(score_total: float, umbrales: list) -> str:
     """
     Clasifica el score total en un nivel de riesgo según los umbrales configurados.

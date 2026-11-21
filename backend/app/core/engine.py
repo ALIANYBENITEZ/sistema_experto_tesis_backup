@@ -21,7 +21,7 @@ from .schemas import (
 )
 from .validator import validar_valor
 from .evaluator import evaluar_factor
-from .classifier import clasificar_riesgo
+from .classifier import clasificar_riesgo, normalizar_score
 from .explainer import generar_explicacion_global, identificar_factores_impacto
 
 
@@ -152,6 +152,11 @@ def ejecutar_evaluacion(modelo, datos_cliente: dict, tipo_persona: str, cliente_
             "explicacion": resultado_regla["explicacion"],
         }
         detalles.append(detalle)
+
+    # El score global representa riesgo acumulado y no puede ser negativo.
+    # Los pesos favorables pueden reducir el score bruto por debajo de cero,
+    # pero el resultado normalizado mínimo es 0.
+    score_total = normalizar_score(score_total)
 
     # PASO 11: Clasificar riesgo global
     clasificacion = clasificar_riesgo(score_total, list(modelo.umbrales))
