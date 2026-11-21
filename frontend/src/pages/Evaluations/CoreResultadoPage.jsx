@@ -190,7 +190,7 @@ export default function CoreResultadoPage() {
                     <p className={`text-sm font-bold ${d.peso >= 0 ? (d.peso > 0 ? 'text-red-600' : 'text-gray-400') : 'text-green-600'}`}>
                       {d.peso > 0 ? '+' : ''}{d.peso.toFixed(1)}
                     </p>
-                    <p className="text-xs text-gray-400 capitalize">{d.nivel}</p>
+                    <p className="text-xs text-gray-400">Riesgo {d.nivel}</p>
                   </>
                 )}
                 {d.estado !== 'evaluado' && (

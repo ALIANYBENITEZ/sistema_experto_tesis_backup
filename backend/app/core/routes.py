@@ -16,9 +16,36 @@ from .models import (
     UmbralScoring, EvaluacionScoring, DetalleEvaluacionScoring,
 )
 from .engine import ejecutar_evaluacion
-from .classifier import resumen_presentacion, normalizar_score
+from .classifier import resumen_presentacion, normalizar_score, clasificar_riesgo
+from .explainer import generar_explicacion_global
 
 core_bp = Blueprint("core", __name__, url_prefix="/api/core")
+
+
+def _resultado_efectivo(ev):
+    """Devuelve (clasificacion, score, explicacion) coherentes para una evaluación guardada.
+
+    Las evaluaciones anteriores a la normalización pudieron guardar un score negativo
+    (perfil muy favorable) clasificado como "alto", porque quedaba fuera del primer
+    umbral. Se reclasifican al leer con el score original y los umbrales del modelo.
+    El rechazo por lista negra (factor determinante) se conserva tal como se guardó.
+    """
+    score = normalizar_score(ev.score_total)
+    clasificacion = ev.clasificacion
+    explicacion = ev.explicacion
+
+    es_determinante = (ev.explicacion or "").startswith("FACTOR DETERMINANTE")
+    if float(ev.score_total) < 0 and not es_determinante:
+        modelo = ModeloScoring.query.get(ev.modelo_id)
+        umbrales = list(modelo.umbrales) if modelo else []
+        nueva = clasificar_riesgo(float(ev.score_total), umbrales)
+        if nueva != clasificacion:
+            clasificacion = nueva
+            explicacion = generar_explicacion_global(
+                [d.to_dict() for d in ev.detalles], nueva, score
+            )
+
+    return clasificacion, score, explicacion
 
 
 # ══════════════════════════════════════════════════════════════
@@ -146,7 +173,7 @@ def evaluar():
     # Respuesta
     resp = evaluacion.to_dict(include_detalles=True)
     resp["impacto"] = resultado["impacto"]
-    resp.update(resumen_presentacion(evaluacion.clasificacion, evaluacion.score_total))
+    resp.update(resumen_presentacion(evaluacion.clasificacion))
     resp["lista_negra"] = resultado.get("lista_negra")
     resp["cliente_nombre"] = f"{cliente.nombre} {cliente.apellido or ''}".strip()
     resp["cliente_num_doc"] = cliente.num_doc
@@ -178,8 +205,10 @@ def list_evaluaciones():
         if c:
             d["cliente_nombre"] = f"{c.nombre} {c.apellido or ''}".strip()
             d["num_doc"] = c.num_doc
-        d["score_total"] = normalizar_score(ev.score_total)
-        d.update(resumen_presentacion(ev.clasificacion, d["score_total"]))
+        clasificacion_ef, score_ef, _ = _resultado_efectivo(ev)
+        d["score_total"] = score_ef
+        d["clasificacion"] = clasificacion_ef
+        d.update(resumen_presentacion(clasificacion_ef))
         items.append(d)
 
     return success(data={
@@ -195,8 +224,11 @@ def list_evaluaciones():
 def get_evaluacion(eval_id):
     ev = EvaluacionScoring.query.get_or_404(eval_id)
     data = ev.to_dict(include_detalles=True)
-    data["score_total"] = normalizar_score(ev.score_total)
-    data.update(resumen_presentacion(ev.clasificacion, data["score_total"]))
+    clasificacion_ef, score_ef, explicacion_ef = _resultado_efectivo(ev)
+    data["score_total"] = score_ef
+    data["clasificacion"] = clasificacion_ef
+    data["explicacion"] = explicacion_ef
+    data.update(resumen_presentacion(clasificacion_ef))
     c = Client.query.get(ev.cliente_id)
     if c:
         data["cliente_nombre"] = f"{c.nombre} {c.apellido or ''}".strip()
@@ -257,9 +289,9 @@ def export_evaluacion_pdf(eval_id):
 
     # ── DATOS GENERALES ──
     COLORES_NIVEL = {"bajo": "#16a34a", "medio": "#ca8a04", "alto": "#dc2626"}
-    color_clasif = COLORES_NIVEL.get(ev.clasificacion, "#333")
-    score_total = normalizar_score(ev.score_total)
-    presentacion = resumen_presentacion(ev.clasificacion, score_total)
+    clasificacion_ef, score_total, explicacion_ef = _resultado_efectivo(ev)
+    color_clasif = COLORES_NIVEL.get(clasificacion_ef, "#333")
+    presentacion = resumen_presentacion(clasificacion_ef)
 
     info_data = [
         ["Evaluación N°:", str(ev.id), "Fecha:", ev.fecha.strftime("%d/%m/%Y %H:%M") if ev.fecha else ""],
@@ -303,15 +335,15 @@ def export_evaluacion_pdf(eval_id):
     elements.append(Spacer(1, 0.4*cm))
 
     # ── EXPLICACIÓN ──
-    if ev.explicacion:
+    if explicacion_ef:
         elements.append(Paragraph("Análisis del Sistema", styles['Subtitulo']))
-        elements.append(Paragraph(ev.explicacion, styles['Explicacion']))
+        elements.append(Paragraph(explicacion_ef, styles['Explicacion']))
         elements.append(Spacer(1, 0.4*cm))
 
     # ── DETALLE POR FACTOR ──
     elements.append(Paragraph("Detalle por Factor", styles['Subtitulo']))
 
-    headers = ["Factor", "Categoría", "Valor", "Nivel", "Peso", "Estado"]
+    headers = ["Factor", "Categoría", "Valor", "Riesgo", "Peso", "Estado"]
     table_data = [headers]
 
     NIVEL_COLORS = {
